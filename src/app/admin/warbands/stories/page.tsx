@@ -11,6 +11,8 @@ import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import adminStyles from '../../admin.module.css';
 
+export const dynamic = "force-dynamic";
+
 function WarbandStoriesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();

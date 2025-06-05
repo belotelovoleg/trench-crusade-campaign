@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = "force-dynamic";
 import { Typography, Box } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
@@ -51,6 +52,7 @@ export default function AdminPlayers() {
   });
   const [newPassword, setNewPassword] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; id: number | null; name?: string | null }>({ open: false, id: null });
 
   // --- Сортування ---
   const [orderBy, setOrderBy] = useState<'id'|'login'|'name'|'email'|'idt'|'udt'|'ldt'>('idt');
@@ -150,6 +152,24 @@ export default function AdminPlayers() {
       setSaving(false);
     }
   };
+  const handleDelete = async () => {
+    if (!deleteDialog.id) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/admin/players', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: deleteDialog.id }),
+      });
+      if (!res.ok) throw new Error('Помилка видалення');
+      setPlayers(players => players.filter(p => p.id !== deleteDialog.id));
+      setDeleteDialog({ open: false, id: null });
+    } catch (e: any) {
+      alert(e.message || 'Помилка');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // --- handler для кліку по заголовку ---
   function handleSort(field: typeof orderBy) {
@@ -218,6 +238,14 @@ export default function AdminPlayers() {
                       onClick={() => setPasswordDialog({ open: true, id: p.id })}
                     >
                       Змінити пароль
+                    </Button>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => setDeleteDialog({ open: true, id: p.id, name: p.name || p.login })}
+                      disabled={saving}
+                    >
+                      Видалити
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -294,8 +322,10 @@ export default function AdminPlayers() {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEditDialogOpen(false)}>Скасувати</Button>
-            <Button onClick={handleEditSave} disabled={saving}>
+            <Button onClick={() => setEditDialogOpen(false)} color="inherit" variant="outlined">
+              Скасувати
+            </Button>
+            <Button onClick={handleEditSave} disabled={saving} color="primary" variant="contained">
               Зберегти
             </Button>
           </DialogActions>
@@ -317,14 +347,31 @@ export default function AdminPlayers() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPasswordDialog({ open: false, id: null })}>
+            <Button onClick={() => setPasswordDialog({ open: false, id: null })} color="inherit" variant="outlined">
               Скасувати
             </Button>
             <Button
               onClick={handlePasswordChange}
               disabled={saving || newPassword.length < 4}
+              color="primary"
+              variant="contained"
             >
               Зберегти
+            </Button>
+          </DialogActions>
+        </Dialog>
+        {/* Діалог підтвердження видалення */}
+        <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ open: false, id: null })}>
+          <DialogTitle>Видалити гравця?</DialogTitle>
+          <DialogContent>
+            Ви впевнені, що хочете видалити гравця <b>{deleteDialog.name}</b>? Цю дію не можна скасувати.
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="inherit" variant="outlined">
+              Скасувати
+            </Button>
+            <Button onClick={handleDelete} color="error" variant="contained" disabled={saving}>
+              Видалити
             </Button>
           </DialogActions>
         </Dialog>

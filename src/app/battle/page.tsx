@@ -1,5 +1,7 @@
 import { Suspense } from "react";
-import BattlePageInner from "./BattlePageInner";
+import BattlePageInner from "@/app/battle/BattlePageInner";
+
+export const dynamic = "force-dynamic";
 
 export default function BattlePage() {
   return (

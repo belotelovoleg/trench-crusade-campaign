@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Typography, Box, CircularProgress, Alert } from "@mui/material";
 import adminStyles from './admin.module.css';
 
+export const dynamic = "force-dynamic";
+
 export default function AdminHome() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);

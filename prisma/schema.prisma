@@ -120,5 +120,6 @@ enum games_status {
 enum WarbandStatus {
   active
   checking
+  needs_update // новий статус: потребує оновлення ростеру
   deleted
 }

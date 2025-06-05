@@ -5,10 +5,10 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#1a237e', // темний синій
+      main: '#1a237e',
     },
     secondary: {
-      main: '#4f0101', // темний фіолетовий
+      main: '#4f0101', 
     },
   },
   typography: {

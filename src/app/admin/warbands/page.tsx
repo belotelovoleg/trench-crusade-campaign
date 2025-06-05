@@ -14,6 +14,8 @@ interface WarbandRow {
   rosters: { id: number; file_url: string | null; ducats?: number | null }[];
 }
 
+export const dynamic = "force-dynamic";
+
 export default function AdminWarbands() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -139,6 +141,7 @@ export default function AdminWarbands() {
                     >
                       <MenuItem value="active">Активна</MenuItem>
                       <MenuItem value="checking">На перевірці</MenuItem>
+                      <MenuItem value="needs_update">Потребує оновлення ростеру</MenuItem>
                       <MenuItem value="deleted">Видалена</MenuItem>
                     </Select>
                   </TableCell>

@@ -1,8 +1,6 @@
+import prisma from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
 
 export async function POST(request: Request) {
   try {
@@ -11,8 +9,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Введіть логін і пароль' }, { status: 400 });
     }
 
-    // Знаходимо користувача по логіну
-    const user = await prisma.players.findUnique({ where: { login } });
+    // Шукаємо користувача по логіну або email
+    const user = await prisma.players.findFirst({
+      where: {
+        OR: [
+          { login: login },
+          { email: login }
+        ]
+      }
+    });
     if (!user) {
       return NextResponse.json({ success: false, error: 'Користувача не знайдено' }, { status: 401 });
     }

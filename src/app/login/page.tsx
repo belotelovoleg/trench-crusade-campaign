@@ -49,8 +49,8 @@ export default function LoginPage() {
         <h2>Вхід</h2>
         <TextField
           name="login"
-          label="Login"
-          placeholder="Login"
+          label="Логін або email"
+          placeholder="Логін або email"
           onChange={handleChange}
           className={styles.input}
           autoComplete="username"
@@ -63,8 +63,8 @@ export default function LoginPage() {
         <TextField
           name="password"
           type="password"
-          label="Password"
-          placeholder="Password"
+          label="Пароль"
+          placeholder="Пароль"
           onChange={handleChange}
           className={styles.input}
           autoComplete="current-password"
@@ -81,7 +81,9 @@ export default function LoginPage() {
           <p className={`${styles.status} ${styles.success}`}>Вхід успішний!</p>
         )}
         {status && status !== 'success' && (
-          <p className={`${styles.status} ${styles.error}`}>{status === 'error' ? 'Помилка логіну.' : status}</p>
+          <p className={`${styles.status} ${styles.error}`}>
+            {status === 'error' ? 'Помилка входу.' : status === 'loading' ? 'Зачекайте...' : status}
+          </p>
         )}
       </form>
     </div>

@@ -1,4 +1,6 @@
 "use client";
+export const dynamic = "force-dynamic";
+
 import { useEffect, useState, useCallback } from "react";
 import { Box, Button, Paper, Typography, CircularProgress, Stack, IconButton, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";

@@ -71,3 +71,21 @@ export async function POST(req: Request) {
   await prisma.players.update({ where: { id }, data: { password_hash } });
   return NextResponse.json({ ok: true });
 }
+
+// DELETE: видалення гравця
+export async function DELETE(req: Request) {
+  const cookieStore = await cookies();
+  const auth = cookieStore.get('auth');
+  if (!auth?.value) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const admin = await prisma.players.findUnique({ where: { login: auth.value } });
+  if (!admin || !admin.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const { id } = await req.json();
+  if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+
+  // Не дозволяємо видаляти себе
+  if (admin.id === id) return NextResponse.json({ error: 'Не можна видалити себе' }, { status: 400 });
+
+  await prisma.players.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+import { useRef, useEffect, useState } from "react";
 import { Button, TextField, Typography, Avatar, Box, Alert, CircularProgress, Paper } from "@mui/material";
 import styles from './profile.module.css';
 import Cropper from 'react-easy-crop';
@@ -29,6 +30,8 @@ export default function ProfilePage() {
   const [rawImage, setRawImage] = useState<string | null>(null);
   const [tab, setTab] = useState(0);
   const [notes, setNotes] = useState(user?.notes || "");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const profileBgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/me").then(async (res) => {
@@ -41,6 +44,16 @@ export default function ProfilePage() {
       setLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (profileBgRef.current) {
+      if (showCropper) {
+        (profileBgRef.current as any).inert = true;
+      } else {
+        (profileBgRef.current as any).inert = false;
+      }
+    }
+  }, [showCropper]);
 
   const handleTabChange = (_: any, newValue: number) => setTab(newValue);
 
@@ -64,7 +77,10 @@ export default function ProfilePage() {
     if (!rawImage || !croppedAreaPixels) return;
     const croppedBlob = await getCroppedImg(rawImage, croppedAreaPixels, 200);
     setAvatarFile(new File([croppedBlob], 'avatar.jpg', { type: 'image/jpeg' }));
-    setAvatar(URL.createObjectURL(croppedBlob));
+    // Створюємо превʼю обрізаного зображення
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewUrl(reader.result as string);
+    reader.readAsDataURL(croppedBlob);
     setShowCropper(false);
   };
 
@@ -85,8 +101,9 @@ export default function ProfilePage() {
         setError(data.error || "Помилка збереження аватара");
       } else {
         setSuccess("Аватар оновлено");
-        setAvatar(`/${data.avatar_url}`);
+        setAvatar(`/api/avatar/${data.avatar_url.replace(/^.*[\\/]/, '')}?t=${Date.now()}`);
         setAvatarFile(null);
+        setPreviewUrl(null); // Скидаємо превʼю
       }
     } catch (e: any) {
       setError(e.message || "Помилка збереження аватара");
@@ -151,8 +168,8 @@ export default function ProfilePage() {
   if (loading) return <Box sx={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'60vh'}}><CircularProgress /></Box>;
 
   return (
-    <Box className={styles.profileBg}>
-      <Paper className={styles.profilePaper}>
+    <Box className={styles.profileBg} ref={profileBgRef} component="div">
+      <Box className={styles.profilePaper}>
         <Typography variant="h5" align="center" gutterBottom>Профіль</Typography>
         {error && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
         {success && <Alert severity="success" sx={{mb:2}}>{success}</Alert>}
@@ -162,7 +179,7 @@ export default function ProfilePage() {
         </Tabs>
         {tab === 0 && (
           <Box className={styles.profileForm}>
-            <Avatar src={avatar || undefined} className={styles.profileAvatar}/>
+            <Avatar src={avatar ? (avatar.startsWith('/api/avatar/') ? avatar : `/api/avatar/${avatar.replace(/^.*[\\/]/, '')}`) : undefined} className={styles.profileAvatar}/>
             <Button variant="outlined" component="label" disabled={saving}>
               Завантажити аватар
               <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
@@ -192,10 +209,17 @@ export default function ProfilePage() {
                   onChange={(_, z) => setZoom(z as number)}
                   sx={{ width: 260, mt: 2 }}
                 />
+                {/* Превʼю обрізаного зображення */}
+                {previewUrl && (
+                  <Box sx={{ mt: 2, mb: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>Превʼю обрізаного зображення:</Typography>
+                    <Avatar src={previewUrl} sx={{ width: 80, height: 80 }} />
+                  </Box>
+                )}
               </DialogContent>
               <DialogActions>
                 <Button variant="contained" color="primary" onClick={handleCropSave}>
-                  Обрізати та зберегти
+                  Обрізати зображення
                 </Button>
                 <Button variant="text" onClick={() => setShowCropper(false)}>
                   Скасувати
@@ -204,9 +228,14 @@ export default function ProfilePage() {
             </Dialog>
             {/* Кнопка "Зберегти аватар" зʼявляється, якщо є avatarFile і cropper закритий */}
             {avatarFile && !showCropper && (
-              <Button variant="contained" color="primary" fullWidth sx={{ mt: 1 }} onClick={handleAvatarUpload} disabled={saving}>
-                Зберегти аватар
-              </Button>
+              <>
+                {previewUrl && (
+                  <Avatar src={previewUrl} className={styles.profileAvatar} sx={{ mb: 1, border: '2px solid #388e3c' }} />
+                )}
+                <Button variant="contained" color="primary" fullWidth sx={{ mt: 1 }} onClick={handleAvatarUpload} disabled={saving}>
+                  Зберегти аватар
+                </Button>
+              </>
             )}
             <TextField
               label="Email"
@@ -262,7 +291,7 @@ export default function ProfilePage() {
             </Button>
           </Box>
         )}
-      </Paper>
+      </Box>
     </Box>
   );
 }

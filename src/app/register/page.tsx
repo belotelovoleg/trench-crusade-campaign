@@ -11,6 +11,8 @@ import {
 } from '@mui/material';
 import styles from './register.module.css';
 
+export const dynamic = "force-dynamic";
+
 export default function RegisterPage() {
   const [form, setForm] = useState({ login: '', password: '', name: '', email: '' });
   const [status, setStatus] = useState('');
