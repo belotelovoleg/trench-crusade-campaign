@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Button, Typography, CircularProgress, MenuItem, Select, FormControl, InputLabel, Paper } from "@mui/material";
 import { EditorContent, useEditor } from '@tiptap/react';
@@ -11,7 +11,7 @@ import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
 import adminStyles from '../../admin.module.css';
 
-export default function WarbandStoriesPage() {
+function WarbandStoriesPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const warbandId = searchParams?.get('id');
@@ -139,5 +139,13 @@ export default function WarbandStoriesPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export default function WarbandStoriesPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <WarbandStoriesPageInner />
+    </Suspense>
   );
 }
