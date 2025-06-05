@@ -6,7 +6,7 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { filename: string } }
 ) {
-  const filePath = join(process.cwd(), 'public', 'avatars', params.filename);
+  const filePath = join(process.cwd(), 'data', 'avatars', params.filename);
 
   if (!existsSync(filePath)) {
     return new NextResponse('Not found', { status: 404 });

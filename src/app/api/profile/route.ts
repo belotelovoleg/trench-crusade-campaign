@@ -26,18 +26,19 @@ export async function PATCH(request: Request) {
       if (file && typeof file === 'object' && 'arrayBuffer' in file) {
         // Видалити попередній аватар, якщо був
         if (avatarUrl) {
-          const prevPath = path.join(process.cwd(), 'public', avatarUrl);
+          const prevPath = path.join(process.cwd(), 'data', 'avatars', avatarUrl.replace(/^.*[\\/]/, ''));
           try { await fs.unlink(prevPath); } catch {}
         }
         // Зберегти новий файл
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
         const fileName = `user_${user!.id}_${Date.now()}.${ext}`;
-        const filePath = path.join(process.cwd(), 'public', 'avatars', fileName);
+        const filePath = path.join(process.cwd(), 'data', 'avatars', fileName);
         const buffer = Buffer.from(await file.arrayBuffer());
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
         await fs.writeFile(filePath, buffer);
         // @ts-ignore
-        await prisma.$executeRawUnsafe(`UPDATE players SET avatar_url = ?, udt = ? WHERE id = ?`, `avatars/${fileName}`, new Date(), user!.id);
-        return NextResponse.json({ success: true, avatar_url: `avatars/${fileName}` });
+        await prisma.$executeRawUnsafe(`UPDATE players SET avatar_url = ?, udt = ? WHERE id = ?`, fileName, new Date(), user!.id);
+        return NextResponse.json({ success: true, avatar_url: fileName });
       }
       return NextResponse.json({ error: 'Файл не знайдено' }, { status: 400 });
     }

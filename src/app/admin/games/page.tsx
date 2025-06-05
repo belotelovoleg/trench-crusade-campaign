@@ -86,11 +86,7 @@ export default function AdminGamesPage() {
                   <TableRow key={game.id}>
                     <TableCell>
                       {game.warbands_games_warband_1_idTowarbands?.players?.avatar_url && (
-                        <Image src={
-                          game.warbands_games_warband_1_idTowarbands.players.avatar_url.startsWith('/')
-                            ? game.warbands_games_warband_1_idTowarbands.players.avatar_url
-                            : '/' + game.warbands_games_warband_1_idTowarbands.players.avatar_url
-                        } alt="avatar" width={32} height={32} style={{ borderRadius: '50%' }} />
+                        <Image src={`/api/avatar/${game.warbands_games_warband_1_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}`} alt="avatar" width={32} height={32} style={{ borderRadius: '50%' }} />
                       )}
                     </TableCell>
                     <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_1_idTowarbands?.players?.name || '—'}</TableCell>
@@ -106,11 +102,7 @@ export default function AdminGamesPage() {
                     <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_1_idTowarbands?.name || '—'}</TableCell>
                     <TableCell>
                       {game.warbands_games_warband_2_idTowarbands?.players?.avatar_url && (
-                        <Image src={
-                          game.warbands_games_warband_2_idTowarbands.players.avatar_url.startsWith('/')
-                            ? game.warbands_games_warband_2_idTowarbands.players.avatar_url
-                            : '/' + game.warbands_games_warband_2_idTowarbands.players.avatar_url
-                        } alt="avatar" width={32} height={32} style={{ borderRadius: '50%' }} />
+                        <Image src={`/api/avatar/${game.warbands_games_warband_2_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}`} alt="avatar" width={32} height={32} style={{ borderRadius: '50%' }} />
                       )}
                     </TableCell>
                     <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_2_idTowarbands?.players?.name || '—'}</TableCell>
