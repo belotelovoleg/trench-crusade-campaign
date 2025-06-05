@@ -117,7 +117,7 @@ export default function AdminWarbands() {
                 <TableRow key={w.id}>
                   <TableCell>
                     {w.player && w.player.avatar_url && (
-                      <img src={'/api/' + w.player.avatar_url} alt="avatar" style={{width:32,height:32,borderRadius:'50%'}} />
+                      <img src={'/api/avatar/' + w.player.avatar_url} alt="avatar" style={{width:32,height:32,borderRadius:'50%'}} />
                     )}
                   </TableCell>
                   <TableCell>{w.player ? (w.player.name || w.player.login) : '—'}</TableCell>
