@@ -269,7 +269,7 @@ function BattlePageContent() {
         {/* 1. Супротивник (аватар + ім'я) */}
         <Typography variant="subtitle2" sx={{mb:0.5}}>Супротивник:</Typography>
         <Box sx={{display:'flex',alignItems:'center',gap:1,flexWrap:'wrap', mb:1}}>
-          <Avatar src={oppPlayer?.avatar_url ? '/' + oppPlayer.avatar_url : undefined} sx={{width:32,height:32}} />
+          <Avatar src={oppPlayer?.avatar_url ? `/api/avatar/${oppPlayer.avatar_url.replace(/^.*[\\/]/, '')}` : undefined} sx={{width:32,height:32}} />
           <span>{oppPlayer?.name || oppPlayer?.login}</span>
         </Box>
         {/* 2. Варбанда (іконка+title) + назва варбанди */}
