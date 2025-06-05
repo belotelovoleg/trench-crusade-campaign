@@ -32,7 +32,7 @@ export async function GET() {
       rosters: {
         orderBy: { uploaded_at: 'desc' },
         take: 1,
-        select: { file_url: true },
+        select: { id: true, file_url: true },
       },
     },
   });

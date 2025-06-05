@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, TextField, Avatar, Tooltip, Checkbox, FormControlLabel, IconButton } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, TextField, Avatar, Tooltip, Checkbox, FormControlLabel, IconButton, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import FACTION_AVATARS from '../factionAvatars';
 import AddIcon from '@mui/icons-material/Add';
 
@@ -10,9 +10,10 @@ interface GameResultsDialogProps {
   onResultsSaved: () => void;
   readOnly?: boolean;
   confirmMode?: 'approve'|'reject'|null;
+  adminViewOnly?: boolean;
 }
 
-const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, game, onResultsSaved, readOnly = false, confirmMode = null }) => {
+const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, game, onResultsSaved, readOnly = false, confirmMode = null, adminViewOnly = false }) => {
   const [vp1, setVp1] = useState(game.vp_1 || 0);
   const [vp2, setVp2] = useState(game.vp_2 || 0);
   const [gp1, setGp1] = useState(game.gp_1 || 0);
@@ -35,6 +36,7 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
   const [sk2Roll, setSk2Roll] = useState('');
   const [explore1, setExplore1] = useState(game.player1_explorationDice || '');
   const [explore2, setExplore2] = useState(game.player2_explorationDice || '');
+  const [adminStatus, setAdminStatus] = useState(game.status || 'planned');
 
   const player1 = game.warbands_games_warband_1_idTowarbands?.players;
   const player2 = game.warbands_games_warband_2_idTowarbands?.players;
@@ -119,6 +121,43 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
       setSaving(false);
     }
   }
+  async function handleAdminSave() {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/games', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: game.id,
+          vp_1: Number(vp1),
+          vp_2: Number(vp2),
+          gp_1: Number(gp1),
+          gp_2: Number(gp2),
+          player1_calledReinforcements: reinforce1,
+          player2_calledReinforcements: reinforce2,
+          player1_injuries: injuries1,
+          player2_injuries: injuries2,
+          player1_skillAdvancements: skills1,
+          player2_skillAdvancements: skills2,
+          player1_explorationDice: explore1 === '' ? null : Number(explore1),
+          player2_explorationDice: explore2 === '' ? null : Number(explore2),
+          status: adminStatus,
+        })
+      });
+      if (!res.ok) {
+        let msg = 'Не вдалося зберегти результати';
+        try { const err = await res.json(); if (err && err.error) msg = err.error; } catch {}
+        throw new Error(msg);
+      }
+      onClose();
+      onResultsSaved();
+    } catch (e: any) {
+      setError(e.message || 'Не вдалося зберегти результати');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   // --- Skill Advancements: додавання ---
   const handleAddSkill1 = () => {
@@ -152,10 +191,47 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
     }
   };
 
+  React.useEffect(() => {
+    if (!open) return;
+    setVp1(game.vp_1 ?? 0);
+    setVp2(game.vp_2 ?? 0);
+    setGp1(game.gp_1 ?? 0);
+    setGp2(game.gp_2 ?? 0);
+    setReinforce1(game.player1_calledReinforcements ?? false);
+    setReinforce2(game.player2_calledReinforcements ?? false);
+    setInjuries1(game.player1_injuries ?? []);
+    setInjuries2(game.player2_injuries ?? []);
+    setSkills1(Array.isArray(game.player1_skillAdvancements) ? game.player1_skillAdvancements : []);
+    setSkills2(Array.isArray(game.player2_skillAdvancements) ? game.player2_skillAdvancements : []);
+    setExplore1(game.player1_explorationDice ?? '');
+    setExplore2(game.player2_explorationDice ?? '');
+    setAdminStatus(game.status ?? 'planned');
+  }, [game, open]);
+
+  // Prevent showing action buttons after dialog is closed
+  if (!open) return null;
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{readOnly ? 'Підтвердження результату гри' : 'Ввести результати гри'}</DialogTitle>
+      <DialogTitle>{readOnly ? 'Підтвердження результату гри' : adminViewOnly ? 'Результат гри (тільки перегляд)' : 'Редагування результату гри (адмін)'}</DialogTitle>
       <DialogContent>
+        {(!readOnly && !adminViewOnly) && (
+          <FormControl fullWidth sx={{ mt: 0, mb: 2, mt: 1 }} size="small">
+            <InputLabel id="admin-status-label">Статус гри</InputLabel>
+            <Select
+              labelId="admin-status-label"
+              value={adminStatus}
+              label="Статус гри"
+              onChange={e => setAdminStatus(e.target.value)}
+            >
+              <MenuItem value="planned">Запланована</MenuItem>
+              <MenuItem value="active">Активна</MenuItem>
+              <MenuItem value="pending_approval">Очікує підтвердження</MenuItem>
+              <MenuItem value="finished">Завершена</MenuItem>
+              <MenuItem value="cancelled">Скасована</MenuItem>
+            </Select>
+          </FormControl>
+        )}
         <Box sx={{display:'flex',gap:2,mb:2}}>
           <Box sx={{flex:1}}>
             <Typography variant="subtitle2">Гравець 1</Typography>
@@ -311,15 +387,15 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
         {error && <Typography color="error" sx={{mb:1}}>{error}</Typography>}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Скасувати</Button>
-        {readOnly ? (
+        <Button onClick={onClose}>Закрити</Button>
+        {!adminViewOnly && (readOnly ? (
           <>
             <Button onClick={handleApprove} variant="contained" color="success" disabled={saving}>Підтвердити</Button>
             <Button onClick={handleReject} variant="outlined" color="error" disabled={saving}>Відхилити</Button>
           </>
         ) : (
-          <Button onClick={handleSave} variant="contained" disabled={saving}>Відправити результати</Button>
-        )}
+          <Button onClick={handleAdminSave} variant="contained" disabled={saving}>Зберегти (адмін)</Button>
+        ))}
       </DialogActions>
     </Dialog>
   );

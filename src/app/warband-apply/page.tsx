@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import styles from '../page.module.css';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function WarbandApplyPage() {
+function WarbandApplyContent() {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -61,15 +61,18 @@ export default function WarbandApplyPage() {
         <Typography variant="h5" className={styles.title} gutterBottom>
           {warbandId ? `Оновити ростер для варбанди ${warbandName || ''}` : 'Подати ростер нової варбанди на участь у кампанії'}
         </Typography>
-        <Typography sx={{ mb: 2, color: '#333', fontSize: 16, textAlign: 'center' }}>
-          {warbandId
-            ? `Подайте змінений ростер для варбанди ${warbandName || ''}. Після завантаження новий ростер буде відправлено на перевірку.`
-            : `Ростер потрібно створити у <b>New Recruit</b> (<a href="https://www.newrecruit.eu/" target="_blank" rel="noopener noreferrer">newrecruit.eu</a>),
-            експортувати як <b>JSON-файл</b> і завантажити сюди для валідації.<br/>
-            1. Створи ростер у New Recruit.<br/>
-            2. Експортуй його як JSON.<br/>
-            3. Завантаж цей файл для подачі заявки.`}
-        </Typography>
+        <Typography
+          sx={{ mb: 2, color: '#333', fontSize: 16, textAlign: 'center' }}
+          dangerouslySetInnerHTML={
+            warbandId
+              ? { __html: `Подайте змінений ростер для варбанди ${warbandName || ''}. Після завантаження новий ростер буде відправлено на перевірку.` }
+              : { __html: `Ростер потрібно створити у <b>New Recruit</b> (<a href="https://www.newrecruit.eu/" target="_blank" rel="noopener noreferrer">newrecruit.eu</a>),
+                експортувати як <b>JSON-файл</b> і завантажити сюди для валідації.<br/>
+                1. Створи ростер у New Recruit.<br/>
+                2. Експортуй його як JSON.<br/>
+                3. Завантаж цей файл для подачі заявки.` }
+          }
+        />
         {!success && (
           <>
             <Button
@@ -108,5 +111,13 @@ export default function WarbandApplyPage() {
         )}
       </Box>
     </div>
+  );
+}
+
+export default function WarbandApplyPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <WarbandApplyContent />
+    </Suspense>
   );
 }

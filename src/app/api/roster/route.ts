@@ -17,8 +17,11 @@ export async function GET(request: Request) {
         game_number: Number(game_number),
       },
     });
-    if (!roster || !roster.file_url) {
-      return NextResponse.json({ error: 'Roster not found' }, { status: 404 });
+    if (!roster) {
+      return NextResponse.json({ error: 'Roster not found in database', code: 'not_found', reason: 'db' }, { status: 200 });
+    }
+    if (!roster.file_url) {
+      return NextResponse.json({ error: 'Roster file_url missing in database', code: 'not_found', reason: 'db_file_url' }, { status: 200 });
     }
     roster_id = roster.file_url.replace(/^.*\/(.+)\.json$/, '$1');
   }
@@ -26,14 +29,17 @@ export async function GET(request: Request) {
   // Якщо передано roster_id — шукаємо запис у БД, дістаємо file_url
   if (roster_id && !warband_id && !game_number) {
     const rosterDb = await prisma.rosters.findUnique({ where: { id: Number(roster_id) } });
-    if (!rosterDb || !rosterDb.file_url) {
-      return NextResponse.json({ error: 'Roster not found' }, { status: 404 });
+    if (!rosterDb) {
+      return NextResponse.json({ error: 'Roster not found in database', code: 'not_found', reason: 'db' }, { status: 200 });
+    }
+    if (!rosterDb.file_url) {
+      return NextResponse.json({ error: 'Roster file_url missing in database', code: 'not_found', reason: 'db_file_url' }, { status: 200 });
     }
     roster_id = rosterDb.file_url.replace(/^.*\/(.+)\.json$/, '$1');
   }
 
   if (!roster_id) {
-    return NextResponse.json({ error: 'roster_id is required' }, { status: 400 });
+    return NextResponse.json({ error: 'roster_id is required', code: 'bad_request', reason: 'missing_param' }, { status: 200 });
   }
   // Дозволяємо roster_id з .json або без
   roster_id = roster_id.replace(/\.json$/i, '');
@@ -42,7 +48,9 @@ export async function GET(request: Request) {
     const rostersDir = path.join(process.cwd(), 'data', 'rosters');
     const files = await fs.readdir(rostersDir);
     const fileName = files.find(f => f === `${roster_id}.json` || f === roster_id);
-    if (!fileName) throw new Error('Not found');
+    if (!fileName) {
+      return NextResponse.json({ error: 'Roster file missing', code: 'not_found', reason: 'file' }, { status: 200 });
+    }
     const rosterPath = path.join(rostersDir, fileName);
     const data = await fs.readFile(rosterPath);
     return new Response(data, {
@@ -53,6 +61,6 @@ export async function GET(request: Request) {
       }
     });
   } catch (e) {
-    return NextResponse.json({ error: 'Roster not found' }, { status: 404 });
+    return NextResponse.json({ error: 'Unknown error reading roster file', code: 'error', reason: 'file_read', details: e?.message || String(e) }, { status: 200 });
   }
 }

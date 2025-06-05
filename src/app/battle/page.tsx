@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Box, Typography, Paper, CircularProgress, Button, Avatar, Slider, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import styles from '../page.module.css';
@@ -7,9 +7,10 @@ import PlanGameDialog from './PlanGameDialog';
 import FACTION_AVATARS from '../factionAvatars';
 import BattleGameBlock from './BattleGameBlock';
 
-export default function BattlePage() {
+function BattlePageContent() {
   const searchParams = useSearchParams();
   const warbandId = searchParams?.get('warband_id');
+  const warbandIdNum = Number(warbandId);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState(1);
@@ -18,12 +19,12 @@ export default function BattlePage() {
   const [rosterError, setRosterError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!warbandId) return;
-    fetch(`/api/battle?warband_id=${warbandId}`)
+    if (!warbandIdNum) return;
+    fetch(`/api/battle?warband_id=${warbandIdNum}`)
       .then(res => res.json())
       .then(setData)
       .finally(() => setLoading(false));
-  }, [warbandId]);
+  }, [warbandIdNum]);
 
   // --- Додаємо типізацію для ростерів ---
   type WarbandRoster = {
@@ -41,25 +42,40 @@ export default function BattlePage() {
 
   // --- Додаємо useEffect для завантаження ростера ---
   useEffect(() => {
-    async function loadRoster() {
-      setRoster(null);
-      setRosterError(null);
-      if (!warbandId) return;
-      setRosterLoading(true);
-      try {
-        const res = await fetch(`/api/roster?warband_id=${warbandId}&game_number=${selectedGame}`);
-        if (!res.ok) throw new Error('Roster not found');
-        const dataRoster = await res.json();
-        setRoster(dataRoster);
-      } catch (e) {
-        setRosterError('Не вдалося завантажити ростер');
-      } finally {
-        setRosterLoading(false);
-      }
-    }
-    loadRoster();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedGame, warbandId]);
+    // Діагностика
+    console.log('loadRoster:', { warbandIdNum, selectedGame });
+    setRoster(null);
+    setRosterError(null);
+    // Перевірка на валідність
+    if (!warbandIdNum || !selectedGame || isNaN(selectedGame)) return;
+    setRosterLoading(true);
+    fetch(`/api/roster?warband_id=${warbandIdNum}&game_number=${selectedGame}`)
+      .then(async res => {
+        let json;
+        try {
+          json = await res.json();
+        } catch {
+          throw new Error('Invalid JSON');
+        }
+        if (json && json.error) {
+          // Покращене повідомлення про помилку
+          let msg = 'Не вдалося завантажити ростер';
+          if (json.reason === 'db') msg = 'Ростер не знайдено в базі даних для цієї гри.';
+          else if (json.reason === 'file') msg = 'Файл ростера відсутній на сервері.';
+          else if (json.reason === 'db_file_url') msg = 'У базі даних не вказано файл ростера.';
+          else if (json.reason === 'missing_param') msg = 'Некоректний запит: не вказано параметри.';
+          else if (json.reason === 'file_read') msg = 'Помилка читання файлу ростера.';
+          setRosterError(msg);
+          throw new Error(msg);
+        }
+        return json;
+      })
+      .then(setRoster)
+      .catch((e) => {
+        if (!rosterError) setRosterError('Не вдалося завантажити ростер');
+      })
+      .finally(() => setRosterLoading(false));
+  }, [selectedGame, warbandIdNum]);
 
   const handleDownloadRoster = () => {
     // Підтримка як file_url, так і прямого JSON-об'єкта
@@ -384,5 +400,13 @@ export default function BattlePage() {
         </DialogActions>
       </Dialog>
     </div>
+  );
+}
+
+export default function BattlePage() {
+  return (
+    <Suspense fallback={<Box sx={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'60vh'}}><CircularProgress /></Box>}>
+      <BattlePageContent />
+    </Suspense>
   );
 }

@@ -21,6 +21,11 @@ import {
   Switch,
   FormControlLabel,
 } from "@mui/material";
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import DeleteIcon from '@mui/icons-material/Delete';
 import adminStyles from "../admin.module.css";
 
 interface Player {
@@ -230,23 +235,27 @@ export default function AdminPlayers() {
                   <TableCell>{p.udt ? new Date(p.udt).toLocaleString() : ''}</TableCell>
                   <TableCell>{p.ldt ? new Date(p.ldt).toLocaleString() : ''}</TableCell>
                   <TableCell>
-                    <Button size="small" onClick={() => handleEdit(p)}>
-                      Редагувати
-                    </Button>
-                    <Button
-                      size="small"
-                      onClick={() => setPasswordDialog({ open: true, id: p.id })}
-                    >
-                      Змінити пароль
-                    </Button>
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteDialog({ open: true, id: p.id, name: p.name || p.login })}
-                      disabled={saving}
-                    >
-                      Видалити
-                    </Button>
+                    <Tooltip title="Редагувати" arrow>
+                      <span>
+                        <IconButton size="small" onClick={() => handleEdit(p)}>
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Змінити пароль" arrow>
+                      <span>
+                        <IconButton size="small" onClick={() => setPasswordDialog({ open: true, id: p.id })}>
+                          <VpnKeyIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Видалити" arrow>
+                      <span>
+                        <IconButton size="small" color="error" onClick={() => setDeleteDialog({ open: true, id: p.id, name: p.name || p.login })} disabled={saving}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}

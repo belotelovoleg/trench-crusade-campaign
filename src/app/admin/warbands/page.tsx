@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Alert, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Select, MenuItem, FormControl, InputLabel, Tooltip } from "@mui/material";
 import adminStyles from '../admin.module.css';
 import FACTION_AVATARS from '../../factionAvatars';
+import IconButton from '@mui/material/IconButton';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface WarbandRow {
   id: number;
@@ -102,10 +104,8 @@ export default function AdminWarbands() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Гравець</TableCell>
-                <TableCell></TableCell>
-                <TableCell>Варбанда</TableCell>
-                <TableCell>Фракція</TableCell>
+                <TableCell colSpan={2}>Гравець</TableCell>
+                <TableCell colSpan={2}>Варбанда</TableCell>
                 <TableCell>Статус</TableCell>
                 <TableCell>Ростери</TableCell>
                 <TableCell>Оповідання</TableCell>
@@ -115,13 +115,12 @@ export default function AdminWarbands() {
             <TableBody>
               {warbands.map((w, idx) => (
                 <TableRow key={w.id}>
-                  <TableCell>{w.player ? (w.player.name || w.player.login) : '—'}</TableCell>
                   <TableCell>
                     {w.player && w.player.avatar_url && (
                       <img src={'/' + w.player.avatar_url} alt="avatar" style={{width:32,height:32,borderRadius:'50%'}} />
                     )}
                   </TableCell>
-                  <TableCell>{w.name}</TableCell>
+                  <TableCell>{w.player ? (w.player.name || w.player.login) : '—'}</TableCell>
                   <TableCell>
                     {w.catalogue_name && FACTION_AVATARS[w.catalogue_name] ? (
                       <Tooltip title={w.catalogue_name} arrow>
@@ -133,6 +132,7 @@ export default function AdminWarbands() {
                       </Tooltip>
                     ) : null}
                   </TableCell>
+                  <TableCell>{w.name}</TableCell>
                   <TableCell>
                     <Select
                       size="small"
@@ -227,7 +227,13 @@ export default function AdminWarbands() {
                     </Button>
                   </TableCell>
                   <TableCell>
-                    <Button color="error" variant="outlined" onClick={()=>setDeleteDialog({open:true, warbandId:w.id})}>Видалити</Button>
+                    <Tooltip title="Видалити" arrow>
+                      <span>
+                        <IconButton color="error" size="small" onClick={()=>setDeleteDialog({open:true, warbandId:w.id})}>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))}
