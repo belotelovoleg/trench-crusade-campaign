@@ -1,0 +1,37 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.paper {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  color: white;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+}
+.title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #232526;
+}
+.input {
+  margin-bottom: 1.2rem;
+}
+.success {
+  color: #4caf50;
+  text-align: center;
+  margin-top: 1rem;
+}
+.error {
+  color: #b71c1c;
+  text-align: center;
+  margin-top: 1rem;
+}

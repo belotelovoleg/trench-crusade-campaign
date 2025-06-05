@@ -1,0 +1,91 @@
+.breadcrumbs {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  width: 100%;
+  margin: 0 auto;
+  margin-bottom: 16px;
+  font-size: 15px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  background: rgba(255,255,255,0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 12px 0 rgba(31,38,135,0.08);
+  padding: 0.5rem 1.2rem;
+  min-height: 40px;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.breadcrumbLink {
+  color: #880303;
+  text-decoration: underline;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.breadcrumbLink:hover {
+  color: #ff1313;
+  text-decoration: underline;
+}
+.breadcrumbSeparator {
+  color: #b4551e;
+  margin: 0 6px;
+}
+
+/* Бургер-меню для мобільних */
+.breadcrumbsBurger {
+  display: none;
+  position: absolute;
+  right: 16px;
+  top: 8px;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 101;
+}
+.breadcrumbsBurgerIcon {
+  width: 28px;
+  height: 3px;
+  background: #333;
+  display: block;
+  margin: 6px 0;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.breadcrumbsMobileMenu {
+  display: none;
+  position: fixed;
+  top: 40px;
+  left: 0;
+  right: 0;
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 2px 12px 0 rgba(31,38,135,0.12);
+  border-radius: 0 0 12px 12px;
+  padding: 1rem 1.2rem;
+  z-index: 102;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .breadcrumbs {
+    justify-content: flex-start;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    min-height: 40px;
+  }
+  .breadcrumbsContent {
+    display: none;
+  }
+  .breadcrumbsBurger {
+    display: block;
+  }
+  .breadcrumbsMobileMenu {
+    display: flex;
+  }
+}

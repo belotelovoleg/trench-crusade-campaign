@@ -1,0 +1,126 @@
+.profileBg {
+  min-height: 100vh;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url('/bg/bg03.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.profilePaper {
+  padding: 32px;
+  min-width: 320px;
+  max-width: 500px;
+  border-radius: 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(8px);
+}
+
+.profileAvatar {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  border: 3px solid #1976d2;
+  background: #f5f5f5;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.profileAvatar:hover {
+  box-shadow: 0 4px 24px rgba(25,118,210,0.18);
+  border-color: #1565c0;
+}
+
+.profileForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.profileInput {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #cfd8dc;
+  font-size: 1rem;
+  background: #fafbfc;
+  transition: border-color 0.2s;
+}
+
+.profileInput:focus {
+  outline: none;
+  border-color: #1976d2;
+  background: #fff;
+}
+
+.profileButton {
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 8px;
+  border: none;
+  background: #1976d2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(25,118,210,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.profileButton:hover {
+  background: #1565c0;
+  box-shadow: 0 4px 16px rgba(25,118,210,0.16);
+}
+
+.profileButton.secondary {
+  background: #fff;
+  color: #1976d2;
+  border: 1px solid #1976d2;
+}
+
+.profileButton.secondary:hover {
+  background: #e3f2fd;
+}
+
+.profileMessage {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.97rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.profileMessage.success {
+  background: #e8f5e9;
+  color: #388e3c;
+  border: 1px solid #a5d6a7;
+}
+
+.profileMessage.error {
+  background: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ef9a9a;
+}
+
+@media (max-width: 600px) {
+  .profilePaper {
+    min-width: 0;
+    width: 100vw;
+    max-width: 98vw;
+    padding: 16px 4px;
+    border-radius: 0;
+  }
+  .profileAvatar {
+    width: 72px;
+    height: 72px;
+  }
+}

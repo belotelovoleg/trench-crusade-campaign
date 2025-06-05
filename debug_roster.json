@@ -1,0 +1,13 @@
+{
+  "forces": [
+    {
+      "type": "force",
+      "selections": [
+        { "type": "model", "number": 1, "name": "Test Model" }
+      ]
+    }
+  ],
+  "costs": [
+    { "name": "Ducats", "value": 123 }
+  ]
+}

@@ -1,0 +1,268 @@
+"use client";
+import { useEffect, useState } from "react";
+import { Button, TextField, Typography, Avatar, Box, Alert, CircularProgress, Paper } from "@mui/material";
+import styles from './profile.module.css';
+import Cropper from 'react-easy-crop';
+import Slider from '@mui/material/Slider';
+import getCroppedImg from './utils/cropImage';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+
+export default function ProfilePage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [user, setUser] = useState<any>(null);
+  const [email, setEmail] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null); // preview url
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [rawImage, setRawImage] = useState<string | null>(null);
+  const [tab, setTab] = useState(0);
+  const [notes, setNotes] = useState(user?.notes || "");
+
+  useEffect(() => {
+    fetch("/api/me").then(async (res) => {
+      if (!res.ok) return setError("Не вдалося завантажити профіль");
+      const data = await res.json();
+      setUser(data.user);
+      setEmail(data.user?.email || "");
+      setAvatar(data.user?.avatar || null);
+      setNotes(data.user?.notes || "");
+      setLoading(false);
+    });
+  }, []);
+
+  const handleTabChange = (_: any, newValue: number) => setTab(newValue);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      setRawImage(ev.target?.result as string);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+    setAvatarFile(file);
+  };
+
+  const onCropComplete = (_: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropSave = async () => {
+    if (!rawImage || !croppedAreaPixels) return;
+    const croppedBlob = await getCroppedImg(rawImage, croppedAreaPixels, 200);
+    setAvatarFile(new File([croppedBlob], 'avatar.jpg', { type: 'image/jpeg' }));
+    setAvatar(URL.createObjectURL(croppedBlob));
+    setShowCropper(false);
+  };
+
+  const handleAvatarUpload = async () => {
+    if (!avatarFile) return;
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const formData = new FormData();
+      formData.append('avatar', avatarFile);
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Помилка збереження аватара");
+      } else {
+        setSuccess("Аватар оновлено");
+        setAvatar(`/${data.avatar_url}`);
+        setAvatarFile(null);
+      }
+    } catch (e: any) {
+      setError(e.message || "Помилка збереження аватара");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const body: any = { email };
+      if (newPassword && password) {
+        body.password = password;
+        body.newPassword = newPassword;
+      }
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "Помилка збереження");
+      } else {
+        setSuccess("Профіль оновлено");
+        setPassword("");
+        setNewPassword("");
+      }
+    } catch (e: any) {
+      setError(e.message || "Помилка збереження");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    setSaving(true);
+    setError("");
+    setSuccess("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setError(err.error || "Помилка збереження");
+      } else {
+        setSuccess("Опис збережено");
+      }
+    } catch (e: any) {
+      setError(e.message || "Помилка збереження");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <Box sx={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'60vh'}}><CircularProgress /></Box>;
+
+  return (
+    <Box className={styles.profileBg}>
+      <Paper className={styles.profilePaper}>
+        <Typography variant="h5" align="center" gutterBottom>Профіль</Typography>
+        {error && <Alert severity="error" sx={{mb:2}}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{mb:2}}>{success}</Alert>}
+        <Tabs value={tab} onChange={handleTabChange} centered sx={{mb:2}}>
+          <Tab label="Основні дані" />
+          <Tab label="Інформація для гравців" />
+        </Tabs>
+        {tab === 0 && (
+          <Box className={styles.profileForm}>
+            <Avatar src={avatar || undefined} className={styles.profileAvatar}/>
+            <Button variant="outlined" component="label" disabled={saving}>
+              Завантажити аватар
+              <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
+            </Button>
+            <Dialog open={showCropper} onClose={() => setShowCropper(false)} maxWidth="xs" fullWidth>
+              <DialogContent sx={{ p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {rawImage && (
+                  <Box sx={{ position: 'relative', width: 300, height: 300, mb: 1 }}>
+                    <Cropper
+                      image={rawImage}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={1}
+                      cropShape="round"
+                      showGrid={false}
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={onCropComplete}
+                    />
+                  </Box>
+                )}
+                <Slider
+                  min={1}
+                  max={3}
+                  step={0.01}
+                  value={zoom}
+                  onChange={(_, z) => setZoom(z as number)}
+                  sx={{ width: 260, mt: 2 }}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button variant="contained" color="primary" onClick={handleCropSave}>
+                  Обрізати та зберегти
+                </Button>
+                <Button variant="text" onClick={() => setShowCropper(false)}>
+                  Скасувати
+                </Button>
+              </DialogActions>
+            </Dialog>
+            {/* Кнопка "Зберегти аватар" зʼявляється, якщо є avatarFile і cropper закритий */}
+            {avatarFile && !showCropper && (
+              <Button variant="contained" color="primary" fullWidth sx={{ mt: 1 }} onClick={handleAvatarUpload} disabled={saving}>
+                Зберегти аватар
+              </Button>
+            )}
+            <TextField
+              label="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              fullWidth
+              sx={{mt:2}}
+            />
+            <TextField
+              label="Старий пароль"
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              fullWidth
+              sx={{mt:2}}
+            />
+            <TextField
+              label="Новий пароль"
+              type="password"
+              value={newPassword}
+              onChange={e => setNewPassword(e.target.value)}
+              fullWidth
+              sx={{mt:2}}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{mt:3}}
+              onClick={handleSave}
+              disabled={saving}
+            >
+              Зберегти зміни
+            </Button>
+          </Box>
+        )}
+        {tab === 1 && (
+          <Box className={styles.profileForm}>
+            <TextField
+              label="Інформація для гравців"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              multiline
+              minRows={4}
+              maxRows={10}
+              fullWidth
+              helperText="Вкажіть, коли і де ви можете зіграти гру цієї кампанії. Це поле бачать інші гравці."
+              variant="outlined"
+              sx={{mb:2}}
+            />
+            <Button variant="contained" color="primary" onClick={handleSaveNotes} disabled={saving}>
+              Зберегти опис
+            </Button>
+          </Box>
+        )}
+      </Paper>
+    </Box>
+  );
+}

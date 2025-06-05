@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model games {
+  id                                    Int           @id @default(autoincrement())
+  warband_1_id                          Int
+  warband_2_id                          Int
+  status                                games_status? @default(planned)
+  vp_1                                  Int?          @default(0)
+  vp_2                                  Int?          @default(0)
+  gp_1                                  Int?          @default(0)
+  gp_2                                  Int?          @default(0)
+  idt                                   DateTime?     @default(now()) @db.DateTime(0)
+  udt                                   DateTime?     @default(now()) @db.DateTime(0)
+  warband_1_gameNumber                   Int?          // Номер гри для warband_1
+  warband_2_gameNumber                   Int?          // Номер гри для warband_2
+  warband_1_roster_id                    Int?          // roster id для warband_1
+  warband_2_roster_id                    Int?          // roster id для warband_2
+  warbands_games_warband_1_idTowarbands warbands      @relation("games_warband_1_idTowarbands", fields: [warband_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "games_ibfk_1")
+  warbands_games_warband_2_idTowarbands warbands      @relation("games_warband_2_idTowarbands", fields: [warband_2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "games_ibfk_2")
+  player1_isReady                       Boolean       @default(false)
+  player2_isReady                       Boolean       @default(false)
+  player1_id                           Int? // додано: id гравця для warband_1
+  player2_id                           Int? // додано: id гравця для warband_2
+  player1_isApprovedResult       Boolean       @default(false)
+  player2_isApprovedResult       Boolean       @default(false)
+  player1_calledReinforcements   Boolean       @default(false) // Чи викликав підкріплення гравець 1
+  player2_calledReinforcements   Boolean       @default(false) // Чи викликав підкріплення гравець 2
+  player1_injuries               Json?         // Список травм гравця 1 [{name, roll}]
+  player2_injuries               Json?         // Список травм гравця 2 [{name, roll}]
+  player1_skillAdvancements      Json?         // Список кидків на скіли гравця 1 [{name, roll}]
+  player2_skillAdvancements      Json?         // Список кидків на скіли гравця 2 [{name, roll}]
+  player1_explorationDice        Int?          // Результат кидка Exploration Dice для гравця 1
+  player2_explorationDice        Int?          // Результат кидка Exploration Dice для гравця 2
+
+  @@index([warband_1_id], map: "warband_1_id")
+  @@index([warband_2_id], map: "warband_2_id")
+}
+
+model players {
+  id            Int        @id @default(autoincrement())
+  login         String     @unique(map: "login") @db.VarChar(50)
+  password_hash String     @db.VarChar(255)
+  name          String?    @db.VarChar(100)
+  email         String?    @unique(map: "email") @db.VarChar(100)
+  avatar_url    String?    @db.VarChar(255)
+  notes         String?    @db.Text
+  is_admin      Boolean?   @default(false)
+  is_active     Boolean    @default(true)
+  idt           DateTime?  @default(now()) @db.DateTime(0)
+  udt           DateTime?  @default(now()) @db.DateTime(0)
+  ldt           DateTime?  @db.DateTime(0)
+  warbands      warbands[]
+}
+
+model rosters {
+  id          Int       @id @default(autoincrement())
+  warband_id  Int
+  file_url    String?   @db.Text
+  description String?   @db.Text
+  uploaded_at DateTime? @default(now()) @db.DateTime(0)
+  ducats      Int?      @default(0) // Кількість дукатів з roster.costs
+  model_count Int?      @default(0) // Кількість моделей з roster
+  glory_points Int?     @default(0) // Glory Points з roster.costs
+  warbands    warbands  @relation(fields: [warband_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rosters_ibfk_1")
+
+  @@index([warband_id], map: "warband_id")
+}
+
+model stories {
+  id         Int       @id @default(autoincrement())
+  warband_id Int
+  game_id    Int?
+  text       String?   @db.Text
+  posted_at  DateTime? @default(now()) @db.DateTime(0)
+  warbands   warbands  @relation(fields: [warband_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_ibfk_1")
+
+  @@index([warband_id], map: "warband_id")
+}
+
+model warbands {
+  id                                 Int       @id @default(autoincrement())
+  player_id                          Int
+  name                               String?   @db.VarChar(100)
+  status                             WarbandStatus @default(checking)
+  games_count                        Int?      @default(0)
+  victory_points                     Int?      @default(0)
+  idt                                DateTime? @default(now()) @db.DateTime(0)
+  udt                                DateTime? @default(now()) @db.DateTime(0)
+  catalogue_name                     String?   @db.VarChar(100) // Назва каталогу з першого ростера
+  games_games_warband_1_idTowarbands games[]   @relation("games_warband_1_idTowarbands")
+  games_games_warband_2_idTowarbands games[]   @relation("games_warband_2_idTowarbands")
+  rosters                            rosters[]
+  stories                            stories[]
+  players                            players   @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "warbands_ibfk_1")
+
+  @@index([player_id], map: "player_id")
+}
+
+model about_campaign {
+  id        Int      @id @default(1)
+  content   String?  @db.LongText
+  updatedAt DateTime @updatedAt @db.DateTime(0)
+}
+
+enum games_status {
+  planned
+  active
+  pending_approval // новий статус для непідтверджених результатів
+  finished
+  cancelled
+}
+
+enum WarbandStatus {
+  active
+  checking
+  deleted
+}
