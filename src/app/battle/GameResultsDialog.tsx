@@ -213,9 +213,21 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>{readOnly ? 'Підтвердження результату гри' : adminViewOnly ? 'Результат гри (тільки перегляд)' : 'Редагування результату гри (адмін)'}</DialogTitle>
+      <DialogTitle>
+        {adminViewOnly
+          ? 'Результат гри (тільки перегляд)'
+          : readOnly && confirmMode === 'approve'
+            ? 'Підтвердження результату гри'
+            : readOnly && confirmMode === 'reject'
+              ? 'Відхилення результату гри'
+              : readOnly
+                ? 'Перегляд результату гри'
+                : (!readOnly && !adminViewOnly && game.isAdmin)
+                  ? 'Редагування результату гри (адмін)'
+                  : 'Редагування результату гри'}
+      </DialogTitle>
       <DialogContent>
-        {(!readOnly && !adminViewOnly) && (
+        {(!readOnly && !adminViewOnly && game.isAdmin) && (
           <FormControl fullWidth sx={{ mt: 1, mb: 2 }} size="small">
             <InputLabel id="admin-status-label">Статус гри</InputLabel>
             <Select
@@ -236,7 +248,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
           <Box sx={{flex:1}}>
             <Typography variant="subtitle2">Гравець 1</Typography>
             <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1}}>
-              <Avatar src={player1?.avatar_url ? '/' + player1.avatar_url : undefined} />
+              <Tooltip title={player1?.name || player1?.login || ''} arrow>
+                <Avatar src={player1?.avatar_url ? `/api/avatar/${player1.avatar_url}` : undefined} />
+              </Tooltip>
               <span>{player1?.name || player1?.login}</span>
             </Box>
             <Typography variant="subtitle2">Варбанда:</Typography>
@@ -311,7 +325,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
           <Box sx={{flex:1}}>
             <Typography variant="subtitle2">Гравець 2</Typography>
             <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1}}>
-              <Avatar src={player2?.avatar_url ? '/' + player2.avatar_url : undefined} />
+              <Tooltip title={player2?.name || player2?.login || ''} arrow>
+                <Avatar src={player2?.avatar_url ? `/api/avatar/${player2.avatar_url}` : undefined} />
+              </Tooltip>
               <span>{player2?.name || player2?.login}</span>
             </Box>
             <Typography variant="subtitle2">Варбанда:</Typography>
@@ -394,7 +410,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
             <Button onClick={handleReject} variant="outlined" color="error" disabled={saving}>Відхилити</Button>
           </>
         ) : (
-          <Button onClick={handleAdminSave} variant="contained" disabled={saving}>Зберегти (адмін)</Button>
+          <Button onClick={game.isAdmin ? handleAdminSave : handleSave} variant="contained" disabled={saving}>
+            {game.isAdmin ? 'Зберегти (адмін)' : 'Зберегти'}
+          </Button>
         ))}
       </DialogActions>
     </Dialog>

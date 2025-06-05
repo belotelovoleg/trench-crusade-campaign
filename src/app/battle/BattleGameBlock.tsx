@@ -110,14 +110,14 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
             <>
               <Typography variant="subtitle1">Гра {selectedGame}</Typography>
               <Box sx={{display:'flex',gap:2,alignItems:'center',mb:1}}>
-                <Avatar src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? '/'+currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url : undefined} />
+                <Avatar src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? `/api/avatar/${currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}` : undefined} />
                 <span>{currentGame.warbands_games_warband_1_idTowarbands.name}</span>
                 <span>({currentGame.warbands_games_warband_1_idTowarbands.players.name})</span>
                 <b>VP: {currentGame.vp_1}</b>
                 <b>GP: {currentGame.gp_1}</b>
               </Box>
               <Box sx={{display:'flex',gap:2,alignItems:'center'}}>
-                <Avatar src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? '/'+currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url : undefined} />
+                <Avatar src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? `/api/avatar/${currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}` : undefined} />
                 <span>{currentGame.warbands_games_warband_2_idTowarbands.name}</span>
                 <span>({currentGame.warbands_games_warband_2_idTowarbands.players.name})</span>
                 <b>VP: {currentGame.vp_2}</b>

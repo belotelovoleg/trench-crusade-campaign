@@ -106,7 +106,7 @@ export default function TablePage() {
                       <TableCell>{w.player?.name || ''}</TableCell>
                       <TableCell>
                         {w.player?.avatar_url ? (
-                          <Avatar src={w.player.avatar_url.startsWith('/') ? w.player.avatar_url : '/' + w.player.avatar_url} alt={w.player.name} />
+                          <Avatar src={`/api/avatar/${w.player.avatar_url.replace(/^.*[\\/]/, '')}`} alt={w.player.name} />
                         ) : null}
                       </TableCell>
                       <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
