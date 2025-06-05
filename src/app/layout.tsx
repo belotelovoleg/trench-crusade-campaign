@@ -23,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         if (pathname === '/admin/warbands') sub = 'Варбанди';
         else if (pathname === '/admin/players') sub = 'Гравці';
         else if (pathname === '/admin/about') sub = 'Опис кампанії';
+          else if (pathname === '/admin/games') sub = 'Баталії';
         else sub = pathname.replace('/admin/', '');
         crumbs.push({ label: sub, href: pathname });
       }
@@ -32,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       else if (pathname === '/profile') label = 'Профіль';
       else if (pathname === '/register') label = 'Реєстрація';
       else if (pathname === '/table') label = 'Таблиця результатів';
-      else if (pathname === '/battle') label = 'Битва'; // ДОДАНО для breadcrumbs
+      else if (pathname === '/battle') label = 'Битва';
       else label = pathname.replace(/^\//, '');
       crumbs.push({ label, href: pathname });
     }

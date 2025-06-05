@@ -67,6 +67,13 @@ export default function AdminHome() {
           >
             Варбанди
           </button>
+          <button
+            type="button"
+            onClick={()=>router.push("/admin/games")}
+            className={adminStyles.adminMenuItem}
+          >
+            Ігри
+          </button>
           {/* Додати інші адмін-дії тут */}
         </div>
       </div>

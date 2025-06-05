@@ -24,6 +24,7 @@ interface Warband {
   player: { id: number; name: string; avatar_url?: string };
   games?: GameCell[];
   catalogue_name?: string;
+  total_vp?: number;
 }
 
 const statusMap: Record<string, string> = {
@@ -37,6 +38,7 @@ export const dynamic = "force-dynamic";
 export default function TablePage() {
   const [warbands, setWarbands] = useState<Warband[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortByVP, setSortByVP] = useState(true); // true за замовчуванням
 
   useEffect(() => {
     fetch('/api/table/warbands')
@@ -44,6 +46,10 @@ export default function TablePage() {
       .then(data => setWarbands(Array.isArray(data.warbands) ? data.warbands : []))
       .finally(() => setLoading(false));
   }, []);
+
+  const sortedWarbands = sortByVP
+    ? [...warbands].sort((a, b) => (b.total_vp || 0) - (a.total_vp || 0))
+    : warbands;
 
   return (
     <div className={styles.container}>
@@ -69,13 +75,20 @@ export default function TablePage() {
                     <TableCell>Статус</TableCell>
                     <TableCell>Гравець</TableCell>
                     <TableCell>Аватар</TableCell>
+                    <TableCell
+                      style={{ cursor: 'pointer', fontWeight: 700 }}
+                      onClick={() => setSortByVP((v) => !v)}
+                      title="Сортувати за сумою VP"
+                    >
+                      Сума VP {sortByVP ? '▼' : ''}
+                    </TableCell>
                     {Array.from({ length: 12 }).map((_, i) => (
                       <TableCell key={i}>Гра {i + 1}</TableCell>
                     ))}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {warbands.map((w) => (
+                  {sortedWarbands.map((w) => (
                     <TableRow key={w.id}>
                       <TableCell>{w.name}</TableCell>
                       <TableCell>
@@ -96,6 +109,7 @@ export default function TablePage() {
                           <Avatar src={w.player.avatar_url.startsWith('/') ? w.player.avatar_url : '/' + w.player.avatar_url} alt={w.player.name} />
                         ) : null}
                       </TableCell>
+                      <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
                       {Array.from({ length: 12 }).map((_, i) => {
                         const games = w.games?.filter((g) => g.number === i + 1) || [];
                         if (games.length > 0) {

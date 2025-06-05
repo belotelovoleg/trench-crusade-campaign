@@ -41,7 +41,7 @@ export async function GET() {
     id: w.id, // Додаємо id у відповідь
     name: w.name,
     status: w.status,
-    file_url: w.rosters[0]?.file_url || null,
+    file_url: w.rosters[0]?.id ? `/api/roster?roster_id=${w.rosters[0].id}` : null,
   }));
   const warbandCount = warbands.length;
 

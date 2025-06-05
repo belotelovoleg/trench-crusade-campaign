@@ -99,5 +99,16 @@ export async function PATCH(req: Request) {
     where: { id: game_id },
     data: update,
   });
+
+  // Якщо гра завершена (обидва підтвердили), оновлюємо статус варбанд
+  if (update.status === 'finished') {
+    await prisma.warbands.updateMany({
+      where: {
+        id: { in: [game.warband_1_id, game.warband_2_id] }
+      },
+      data: { status: 'needs_update' }
+    });
+  }
+
   return NextResponse.json({ success: true, game: updated });
 }

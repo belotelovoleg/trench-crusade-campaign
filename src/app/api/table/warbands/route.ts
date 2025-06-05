@@ -40,42 +40,39 @@ export async function GET() {
     }
   });
 
+  // Якщо у warbands є rosters, уніфікуємо file_url
   const result = warbands.map((w: any) => {
-    // Для цієї warband шукаємо всі ігри, де вона warband_1 або warband_2
-    const games: any[] = [];
-    allGames.forEach((g: any) => {
-      if (g.warband_1_id === w.id) {
-        games.push({
-          id: g.id,
-          number: g.warband_1_gameNumber,
-          status: g.status,
-          opponent: g.warbands_games_warband_2_idTowarbands?.name || '',
-          vp: g.vp_1,
-          gp: g.gp_1,
-          opponent_vp: g.vp_2,
-          opponent_gp: g.gp_2,
-        });
-      }
-      if (g.warband_2_id === w.id) {
-        games.push({
-          id: g.id,
-          number: g.warband_2_gameNumber,
-          status: g.status,
-          opponent: g.warbands_games_warband_1_idTowarbands?.name || '',
-          vp: g.vp_2,
-          gp: g.gp_2,
-          opponent_vp: g.vp_1,
-          opponent_gp: g.gp_1,
-        });
-      }
+    const rosters = (w.rosters || []).map((r: any) => ({
+      ...r,
+      file_url: r.id ? `/api/roster?roster_id=${r.id}` : null
+    }));
+
+    // Збираємо всі ігри цієї варбанди
+    const games = allGames.filter(
+      (g: any) => g.warband_1_id === w.id || g.warband_2_id === w.id
+    ).map((g: any) => {
+      const is1 = g.warband_1_id === w.id;
+      return {
+        id: g.id,
+        number: is1 ? g.warband_1_gameNumber : g.warband_2_gameNumber,
+        status: g.status,
+        opponent: is1
+          ? g.warbands_games_warband_2_idTowarbands?.name || ''
+          : g.warbands_games_warband_1_idTowarbands?.name || '',
+        vp: is1 ? g.vp_1 : g.vp_2,
+        gp: is1 ? g.gp_1 : g.gp_2,
+        opponent_vp: is1 ? g.vp_2 : g.vp_1,
+        opponent_gp: is1 ? g.gp_2 : g.gp_1,
+      };
     });
+
+    // Додаємо total_vp для кожної варбанди
+    const total_vp = games.reduce((sum: number, g: any) => sum + (typeof g.vp === 'number' ? g.vp : 0), 0);
     return {
-      id: w.id,
-      name: w.name,
-      status: w.status,
-      player: w.players,
-      catalogue_name: w.catalogue_name,
+      ...w,
+      rosters,
       games,
+      total_vp,
     };
   });
 

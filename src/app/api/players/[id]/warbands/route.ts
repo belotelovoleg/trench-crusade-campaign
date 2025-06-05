@@ -28,5 +28,13 @@ export async function GET(
     },
     orderBy: { id: 'asc' },
   });
-  return NextResponse.json({ warbands });
+  // Уніфікуємо file_url для всіх ростерів
+  const warbandsWithMappedRosters = warbands.map(w => ({
+    ...w,
+    rosters: (w.rosters || []).map(r => ({
+      ...r,
+      file_url: r.id ? `/api/roster?roster_id=${r.id}` : null
+    }))
+  }));
+  return NextResponse.json({ warbands: warbandsWithMappedRosters });
 }

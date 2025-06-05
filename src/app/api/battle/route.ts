@@ -73,5 +73,25 @@ export async function GET(req: Request) {
     select: { game_id: true, text: true },
   });
 
+  // Уніфікуємо file_url для всіх ростерів у warband
+  function mapRosters(rosters) {
+    return (rosters || []).map(r => ({
+      ...r,
+      file_url: r.id ? `/api/roster?roster_id=${r.id}` : null
+    }));
+  }
+  if (warband && warband.rosters) {
+    warband.rosters = mapRosters(warband.rosters);
+  }
+  // Також у всіх іграх для обох warband_1 і warband_2 (якщо є ростери)
+  for (const g of games) {
+    if (g.warbands_games_warband_1_idTowarbands && g.warbands_games_warband_1_idTowarbands.rosters) {
+      g.warbands_games_warband_1_idTowarbands.rosters = mapRosters(g.warbands_games_warband_1_idTowarbands.rosters);
+    }
+    if (g.warbands_games_warband_2_idTowarbands && g.warbands_games_warband_2_idTowarbands.rosters) {
+      g.warbands_games_warband_2_idTowarbands.rosters = mapRosters(g.warbands_games_warband_2_idTowarbands.rosters);
+    }
+  }
+
   return NextResponse.json({ warband, games, stories });
 }

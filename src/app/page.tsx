@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { Button, Typography, CircularProgress } from '@mui/material'; // якщо використовуєш MUI
+import { Button, Typography, CircularProgress, Tooltip } from '@mui/material'; // якщо використовуєш MUI
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import styles from './page.module.css';
@@ -101,50 +101,68 @@ export default function Home() {
                     let statusColor = 'action';
                     let statusTitle = '';
                     if (w.status === 'active') {
-                      statusIcon = <span style={{display:'flex',alignItems:'center'}}><span style={{color:'#388e3c'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#C8E6C9"/><path d="M8 12.5l2.5 2.5L16 9.5" stroke="#388e3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg></span></span>;
+                      statusIcon = <span style={{fontSize: '1.2em'}} role="img" aria-label="Готова">🟢</span>;
                       statusColor = 'success.main';
                       statusTitle = 'Активна';
                     } else if (w.status === 'checking') {
-                      statusIcon = <span style={{display:'flex',alignItems:'center'}}><span style={{color:'#fbc02d'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFF9C4"/><path d="M12 8v4" stroke="#fbc02d" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="16" r="1" fill="#fbc02d"/></svg></span></span>;
+                      statusIcon = <span style={{fontSize: '1.2em'}} role="img" aria-label="На перевірці">👁️</span>;
                       statusColor = 'warning.main';
                       statusTitle = 'На перевірці';
                     } else if (w.status === 'needs_update') {
-                      statusIcon = <span style={{display:'flex',alignItems:'center'}}><span style={{color:'#ff9800'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#FFE0B2"/><path d="M12 7v5" stroke="#ff9800" strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="16" r="1.2" fill="#ff9800"/></svg></span></span>;
+                      statusIcon = <span style={{fontSize: '1.2em'}} role="img" aria-label="Потребує оновлення">⚠️</span>;
                       statusColor = 'warning.dark';
                       statusTitle = 'Потребує оновлення ростеру';
                     } else {
-                      statusIcon = <span style={{display:'flex',alignItems:'center'}}><span style={{color:'#bdbdbd'}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#eeeeee"/><path d="M8 8l8 8M16 8l-8 8" stroke="#bdbdbd" strokeWidth="2" strokeLinecap="round"/></svg></span></span>;
+                      statusIcon = <span style={{fontSize: '1.2em'}} role="img" aria-label="Видалена">💀</span>;
                       statusColor = 'text.disabled';
                       statusTitle = 'Видалена';
                     }
                     return (
                       <div key={w.name + idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, border: '1px solid #e0e0e0', borderRadius: 8, padding: '8px 12px', background: '#fafbfc' }}>
-                        <span style={{ fontWeight: 500 }}>{w.name}</span>
-                        <span style={{ fontSize: 13, color: '#666', display: 'flex', alignItems: 'center' }}>
-                          <span title={statusTitle} style={{marginRight:4, display:'flex',alignItems:'center'}}>{statusIcon}</span>
-                        </span>
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          size="small"
-                          sx={{ ml: 2, fontWeight: 700, letterSpacing: 0.5, boxShadow: '0 1px 4px #4f010122', px: 1.5, py: 0.4, fontSize: 13, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}
-                          component={Link}
-                          href={`/battle?warband_id=${w.id}`}
-                          disabled={w.status === 'checking' || w.status === 'needs_update'}
-                          title={w.status === 'checking' ? 'Варбанди на перевірці. Дочекайтесь схвалення.' : w.status === 'needs_update' ? 'Варбанди потребують оновлення ростеру. Оновіть ростер для активації.' : ''}
-                        >
-                          <img
-                            src="/swords.png"
-                            alt="Схрещені мечі"
-                            style={{
-                              width: 18,
-                              height: 18,
-                              marginRight: 6,
-                              verticalAlign: 'middle',
-                              filter: w.status === 'checking' || w.status === 'needs_update' ? 'grayscale(1) brightness(1.2) opacity(.5) drop-shadow(0 1px 2px #0003)' : 'drop-shadow(0 1px 2px #0003)'
-                            }}
-                          /> До бою!
-                        </Button>
+                        <Tooltip title={statusTitle} arrow placement="top">
+                          <span style={{ fontWeight: 500, cursor: 'help' }}>{w.name}</span>
+                        </Tooltip>
+                        <Tooltip title={statusTitle} arrow placement="top">
+                          <span style={{fontSize: 15, color: '#666', display: 'flex', alignItems: 'center'}}>
+                            <span style={{marginRight:4, display:'flex',alignItems:'center'}}>{statusIcon}</span>
+                          </span>
+                        </Tooltip>
+                        {w.status === 'needs_update' ? (
+                          // Замість кнопки "До бою!" показуємо кнопку "Оновити ростер"
+                          <Button
+                            variant="contained"
+                            color="warning"
+                            size="small"
+                            sx={{ ml: 2, fontWeight: 700, letterSpacing: 0.5, boxShadow: '0 1px 4px #4f010122', px: 1.5, py: 0.4, fontSize: 13, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}
+                            component={Link}
+                            href={`/warband-apply?warband_id=${w.id}&warband_name=${encodeURIComponent(w.name)}`}
+                          >
+                            <span style={{fontSize:18,marginRight:6}}>🛠️</span> Оновити ростер
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            size="small"
+                            sx={{ ml: 2, fontWeight: 700, letterSpacing: 0.5, boxShadow: '0 1px 4px #4f010122', px: 1.5, py: 0.4, fontSize: 13, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}
+                            component={Link}
+                            href={`/battle?warband_id=${w.id}`}
+                            disabled={w.status === 'checking' || w.status === 'needs_update'}
+                            title={w.status === 'checking' ? 'Варбанди на перевірці. Дочекайтесь схвалення.' : w.status === 'needs_update' ? 'Варбанди потребують оновлення ростеру. Оновіть ростер для активації.' : ''}
+                          >
+                            <img
+                              src="/swords.png"
+                              alt="Схрещені мечі"
+                              style={{
+                                width: 18,
+                                height: 18,
+                                marginRight: 6,
+                                verticalAlign: 'middle',
+                                filter: w.status === 'checking' || w.status === 'needs_update' ? 'grayscale(1) brightness(1.2) opacity(.5) drop-shadow(0 1px 2px #0003)' : 'drop-shadow(0 1px 2px #0003)'
+                              }}
+                            /> До бою!
+                          </Button>
+                        )}
                       </div>
                     );
                   })}

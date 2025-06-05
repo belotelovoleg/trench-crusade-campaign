@@ -11,7 +11,7 @@ interface WarbandRow {
   status: string;
   player: { id: number; login: string; name: string | null; avatar_url?: string | null };
   catalogue_name?: string | null;
-  rosters: { id: number; file_url: string | null; ducats?: number | null }[];
+  rosters: { id: number; file_url: string | null; ducats?: number | null; game_number?: number }[];
 }
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,8 @@ export default function AdminWarbands() {
   const [error, setError] = useState("");
   const [warbands, setWarbands] = useState<WarbandRow[]>([]);
   const [deleteDialog, setDeleteDialog] = useState<{open: boolean, warbandId: number|null}>({open: false, warbandId: null});
-  const [selectedRosterId, setSelectedRosterId] = useState<{[key: number]: number | null}>({});
+  const [selectedRosterId, setSelectedRosterId] = useState<{[key: number]: string | null}>({});
+  const [deleteRosterDialog, setDeleteRosterDialog] = useState<{open: boolean, warband?: WarbandRow, roster?: any}>({open: false});
   const router = useRouter();
 
   useEffect(() => {
@@ -70,10 +71,18 @@ export default function AdminWarbands() {
     setWarbands(wb => wb.filter(w => w.id !== id));
   };
 
-  const handleDownload = (url: string) => {
-    // Логіка для скачування файлу за URL
-    window.open(url, "_blank");
+  const handleDownload = (rosterId: number) => {
+    window.open(`/api/roster?roster_id=${rosterId}`, "_blank");
   };
+
+  // Функція для emoji-статусу
+  function warbandStatusIcon(status: string) {
+    if (status === 'active') return '🟢';
+    if (status === 'checking') return '👁️';
+    if (status === 'needs_update') return '⚠️';
+    if (status === 'deleted') return '💀';
+    return '';
+  }
 
   if (loading) return (
     <div className={adminStyles.adminContainer}>
@@ -106,9 +115,9 @@ export default function AdminWarbands() {
             <TableBody>
               {warbands.map((w, idx) => (
                 <TableRow key={w.id}>
-                  <TableCell>{w.player.name || w.player.login}</TableCell>
+                  <TableCell>{w.player ? (w.player.name || w.player.login) : '—'}</TableCell>
                   <TableCell>
-                    {w.player.avatar_url && (
+                    {w.player && w.player.avatar_url && (
                       <img src={'/' + w.player.avatar_url} alt="avatar" style={{width:32,height:32,borderRadius:'50%'}} />
                     )}
                   </TableCell>
@@ -144,30 +153,73 @@ export default function AdminWarbands() {
                       <MenuItem value="needs_update">Потребує оновлення ростеру</MenuItem>
                       <MenuItem value="deleted">Видалена</MenuItem>
                     </Select>
+                    <span style={{ marginLeft: 8, fontSize: '1.2em' }}>
+                      {warbandStatusIcon(w.status)}
+                    </span>
                   </TableCell>
                   <TableCell>
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <InputLabel id={`roster-select-label-${w.id}`}>Ростери</InputLabel>
-                      <Select
-                        labelId={`roster-select-label-${w.id}`}
-                        value={selectedRosterId[w.id] || (w.rosters?.[0]?.id || '')}
-                        label="Ростери"
-                        onChange={(e) => {
-                          setSelectedRosterId((prev) => ({ ...prev, [w.id]: e.target.value }));
-                          const roster = w.rosters?.find(r => r.id === Number(e.target.value));
-                          if (roster?.file_url) window.open(roster.file_url, "_blank");
-                        }}
-                        disabled={!w.rosters || w.rosters.length === 0}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel id={`roster-select-label-${w.id}`}>Ростери</InputLabel>
+                        <Select
+                          labelId={`roster-select-label-${w.id}`}
+                          value={selectedRosterId[w.id] || (w.rosters?.[0]?.file_url ? w.rosters[0].file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : '')}
+                          label="Ростери"
+                          onChange={(e) => {
+                            setSelectedRosterId((prev) => ({ ...prev, [w.id]: e.target.value }));
+                          }}
+                          disabled={!w.rosters || w.rosters.length === 0}
+                          size="small"
+                          sx={{ minWidth: 120 }}
+                        >
+                          {w.rosters && w.rosters.map((r, i) => (
+                            <MenuItem key={r.id} value={r.file_url ? r.file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : ''} dense>
+                              Ростер {typeof r.game_number === 'number' ? `№${r.game_number}` : i+1} ({typeof r.ducats === 'number' ? r.ducats : '?'} дукатів)
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <Button
+                        variant="outlined"
+                        color="primary"
                         size="small"
-                        sx={{ minWidth: 120 }}
+                        sx={{ minWidth: 40, padding: '4px 8px' }}
+                        disabled={!(w.rosters && w.rosters.length > 0 && (selectedRosterId[w.id] || w.rosters[0]?.id))}
+                        onClick={() => {
+                          // Знаходимо id ростера для завантаження
+                          const selected = w.rosters.find(r => String(r.file_url ? r.file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : r.id) === String(selectedRosterId[w.id]));
+                          const rosterId = selected ? selected.id : w.rosters[0]?.id;
+                          if (rosterId) {
+                            window.open(`/api/roster?roster_id=${rosterId}`, '_blank');
+                          }
+                        }}
+                        title="Завантажити ростер"
                       >
-                        {w.rosters && w.rosters.map((r, i) => (
-                          <MenuItem key={r.id} value={r.id} dense>
-                            Ростер {i+1} ({typeof r.ducats === 'number' ? r.ducats : '?'} дукатів)
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 4v12m0 0l-4-4m4 4l4-4" stroke="#1976d2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <rect x="4" y="18" width="16" height="2" rx="1" fill="#1976d2"/>
+                        </svg>
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        sx={{ minWidth: 40, padding: '4px 8px' }}
+                        disabled={!(w.rosters && w.rosters.length > 0 && (selectedRosterId[w.id] || w.rosters[0]?.id))}
+                        onClick={() => {
+                          const selected = w.rosters.find(r => String(r.file_url ? r.file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : r.id) === String(selectedRosterId[w.id]));
+                          const roster = selected || w.rosters[0];
+                          if (roster) {
+                            setDeleteRosterDialog({ open: true, warband: w, roster });
+                          }
+                        }}
+                        title="Видалити ростер"
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M6 6l12 12M6 18L18 6" stroke="#d32f2f" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Button variant="outlined" color="primary" onClick={() => router.push(`/admin/warbands/stories?id=${w.id}`)}>
@@ -188,8 +240,28 @@ export default function AdminWarbands() {
             <DialogContentText>Видалити цю варбанду разом з усіма її ростерами та файлами? Це незворотньо.</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={()=>setDeleteDialog({open:false,warbandId:null})}>Скасувати</Button>
-            <Button color="error" onClick={()=>handleDelete(deleteDialog.warbandId!)}>Видалити</Button>
+            <Button onClick={()=>setDeleteDialog({open:false,warbandId:null})} color="inherit" variant="outlined">Скасувати</Button>
+            <Button color="error" variant="contained" onClick={()=>handleDelete(deleteDialog.warbandId!)}>Видалити</Button>
+          </DialogActions>
+        </Dialog>
+        {/* Діалог видалення ростера */}
+        <Dialog open={deleteRosterDialog.open} onClose={()=>setDeleteRosterDialog({open:false})}>
+          <DialogTitle>
+            Підтвердіть видалення ростера {deleteRosterDialog.roster && typeof deleteRosterDialog.roster.game_number === 'number' ? `(№${deleteRosterDialog.roster.game_number})` : ''}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Ви дійсно хочете видалити ростер <b>{deleteRosterDialog.roster && typeof deleteRosterDialog.roster.game_number === 'number' ? `№${deleteRosterDialog.roster.game_number}` : (deleteRosterDialog.roster ? deleteRosterDialog.roster.id : '?')}</b> варбанди <b>{deleteRosterDialog.warband?.name}</b>? Це незворотньо.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={()=>setDeleteRosterDialog({open:false})} color="inherit" variant="outlined">Скасувати</Button>
+            <Button color="error" variant="contained" onClick={async()=>{
+              if (!deleteRosterDialog.roster?.id) return;
+              await fetch(`/api/admin/rosters/${deleteRosterDialog.roster.id}/delete`, { method: 'POST' });
+              setWarbands(wb => wb.map(w => w.id === deleteRosterDialog.warband?.id ? { ...w, rosters: w.rosters.filter(r => r.id !== deleteRosterDialog.roster.id) } : w));
+              setDeleteRosterDialog({open:false});
+            }}>Видалити</Button>
           </DialogActions>
         </Dialog>
       </div>

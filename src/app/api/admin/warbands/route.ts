@@ -12,19 +12,19 @@ export async function GET() {
   const warbands = await prisma.warbands.findMany({
     include: {
       players: { select: { id: true, login: true, name: true, avatar_url: true } },
-      rosters: { select: { id: true, file_url: true, ducats: true } },
+      rosters: { select: { id: true, file_url: true, ducats: true, game_number: true } },
     },
     orderBy: { id: 'desc' },
   });
 
-  // Приводимо до зручного формату
+  // Уніфікуємо file_url для всіх ростерів у кожній варбанді
   const result = warbands.map((w: any) => ({
-    id: w.id,
-    name: w.name,
-    status: w.status,
-    player: w.players, // для зручності фронту залишаємо player, але це players
-    catalogue_name: w.catalogue_name,
-    rosters: w.rosters,
+    ...w,
+    player: w.players, // <-- використовуємо players
+    rosters: (w.rosters || []).map((r: any) => ({
+      ...r,
+      file_url: r.id ? `/api/roster?roster_id=${r.id}` : null,
+    })),
   }));
 
   return NextResponse.json({ warbands: result });

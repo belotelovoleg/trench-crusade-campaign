@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Button, Typography, Box, CircularProgress, Alert } from '@mui/material';
 import styles from '../page.module.css';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function WarbandApplyPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -12,6 +12,9 @@ export default function WarbandApplyPage() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const warbandId = searchParams?.get('warband_id');
+  const warbandName = searchParams?.get('warband_name');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError('');
@@ -35,15 +38,16 @@ export default function WarbandApplyPage() {
     setLoading(true);
     const formData = new FormData();
     formData.append('roster', file);
+    if (warbandId) formData.append('warband_id', warbandId);
     try {
-      const res = await fetch('/api/warband-apply', {
+      const res = await fetch(warbandId ? '/api/warband-update' : '/api/warband-apply', {
         method: 'POST',
         body: formData,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Помилка завантаження.');
       setSuccess(true);
-      setInfo('Ростер успішно завантажено!');
+      setInfo(data.message || 'Ростер успішно завантажено!');
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -55,14 +59,16 @@ export default function WarbandApplyPage() {
     <div className={styles.container}>
       <Box className={styles.centerBox}>
         <Typography variant="h5" className={styles.title} gutterBottom>
-          Подати ростер на участь у кампанії
+          {warbandId ? `Оновити ростер для варбанди ${warbandName || ''}` : 'Подати ростер нової варбанди на участь у кампанії'}
         </Typography>
         <Typography sx={{ mb: 2, color: '#333', fontSize: 16, textAlign: 'center' }}>
-          Ростер потрібно створити у <b>New Recruit</b> (<a href="https://www.newrecruit.eu/" target="_blank" rel="noopener noreferrer">newrecruit.eu</a>),
-          експортувати як <b>JSON-файл</b> і завантажити сюди для валідації.<br/>
-          1. Створи ростер у New Recruit.<br/>
-          2. Експортуй його як JSON.<br/>
-          3. Завантаж цей файл для подачі заявки.
+          {warbandId
+            ? `Подайте змінений ростер для варбанди ${warbandName || ''}. Після завантаження новий ростер буде відправлено на перевірку.`
+            : `Ростер потрібно створити у <b>New Recruit</b> (<a href="https://www.newrecruit.eu/" target="_blank" rel="noopener noreferrer">newrecruit.eu</a>),
+            експортувати як <b>JSON-файл</b> і завантажити сюди для валідації.<br/>
+            1. Створи ростер у New Recruit.<br/>
+            2. Експортуй його як JSON.<br/>
+            3. Завантаж цей файл для подачі заявки.`}
         </Typography>
         {!success && (
           <>
