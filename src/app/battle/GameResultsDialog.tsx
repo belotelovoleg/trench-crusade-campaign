@@ -216,7 +216,7 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
       <DialogTitle>{readOnly ? 'Підтвердження результату гри' : adminViewOnly ? 'Результат гри (тільки перегляд)' : 'Редагування результату гри (адмін)'}</DialogTitle>
       <DialogContent>
         {(!readOnly && !adminViewOnly) && (
-          <FormControl fullWidth sx={{ mt: 0, mb: 2, mt: 1 }} size="small">
+          <FormControl fullWidth sx={{ mt: 1, mb: 2 }} size="small">
             <InputLabel id="admin-status-label">Статус гри</InputLabel>
             <Select
               labelId="admin-status-label"
