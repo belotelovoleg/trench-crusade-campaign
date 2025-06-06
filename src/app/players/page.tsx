@@ -14,7 +14,7 @@ export default function PlayersPage() {
     const [sliderValue, setSliderValue] = useState<{ [warbandId: number]: number }>({});
 
     useEffect(() => {
-        fetch('/api/admin/players')
+        fetch('/api/players')
             .then(res => res.json())
             .then(data => {
                 setPlayers(data.players || []);
