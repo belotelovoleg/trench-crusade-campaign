@@ -21,7 +21,7 @@ interface Warband {
   id: number;
   name: string;
   status: string;
-  player: { id: number; name: string; avatar_url?: string };
+  players: { id: number; name: string; avatar_url?: string };
   games?: GameCell[];
   catalogue_name?: string;
   total_vp?: number;
@@ -72,7 +72,6 @@ export default function TablePage() {
                   <TableRow>
                     <TableCell>Warband</TableCell>
                     <TableCell>Фракція</TableCell>
-                    <TableCell>Статус</TableCell>
                     <TableCell>Гравець</TableCell>
                     <TableCell>Аватар</TableCell>
                     <TableCell
@@ -102,11 +101,10 @@ export default function TablePage() {
                           </Tooltip>
                         ) : null}
                       </TableCell>
-                      <TableCell>{statusMap[w.status] || w.status}</TableCell>
-                      <TableCell>{w.player?.name || ''}</TableCell>
+                      <TableCell>{w.players?.name || ''}</TableCell>
                       <TableCell>
-                        {w.player?.avatar_url ? (
-                          <Avatar src={`/api/avatar/${w.player.avatar_url.replace(/^.*[\\/]/, '')}`} alt={w.player.name} />
+                        {w.players?.avatar_url ? (
+                          <Avatar src={`/api/avatar/${w.players.avatar_url.replace(/^.*[\\/]/, '')}`} alt={w.players.name} />
                         ) : null}
                       </TableCell>
                       <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
