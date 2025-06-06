@@ -154,6 +154,7 @@ export default function AdminGamesPage() {
           onResultsSaved={() => { setSelectedGame(null); setDialogMode(null); setRefresh(r => r + 1); }}
           readOnly={dialogMode === 'view'}
           adminViewOnly={dialogMode === 'view'}
+          adminEditMode={dialogMode === 'edit'}
         />
         {/* Delete Confirmation Dialog */}
         <Dialog open={!!deleteId} onClose={() => setDeleteId(null)}>

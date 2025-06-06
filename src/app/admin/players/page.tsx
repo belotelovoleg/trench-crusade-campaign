@@ -1,6 +1,6 @@
 "use client";
 export const dynamic = "force-dynamic";
-import { Typography, Box } from "@mui/material";
+import { Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -33,7 +33,7 @@ interface Player {
   login: string;
   name: string | null;
   email: string | null;
-  avatar_base64: string | null;
+  avatar_url: string | null;
   notes: string | null;
   is_admin: boolean;
   is_active: boolean;
@@ -205,6 +205,7 @@ export default function AdminPlayers() {
             <TableHead>
               <TableRow>
                 <TableCell onClick={() => handleSort('id')} style={{cursor:'pointer'}}>ID{orderBy==='id' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
+                <TableCell>Аватар</TableCell>
                 <TableCell onClick={() => handleSort('login')} style={{cursor:'pointer'}}>Логін{orderBy==='login' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
                 <TableCell onClick={() => handleSort('name')} style={{cursor:'pointer'}}>Ім'я{orderBy==='name' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
                 <TableCell onClick={() => handleSort('email')} style={{cursor:'pointer'}}>Email{orderBy==='email' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
@@ -220,6 +221,19 @@ export default function AdminPlayers() {
               {sortedPlayers.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell>{p.id}</TableCell>
+                  <TableCell>
+                    <Tooltip title={p.name || p.login || ''} arrow>
+                      {p.avatar_url ? (
+                        <img
+                          src={`/api/avatar/${p.avatar_url}`}
+                          alt="avatar"
+                          style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#eee' }}
+                        />
+                      ) : (
+                        <span style={{ display: 'inline-block', width: 32, height: 32, borderRadius: '50%', background: '#eee', textAlign: 'center', lineHeight: '32px', color: '#888' }}>—</span>
+                      )}
+                    </Tooltip>
+                  </TableCell>
                   <TableCell>{p.login}</TableCell>
                   <TableCell>{p.name}</TableCell>
                   <TableCell>{p.email}</TableCell>
@@ -237,14 +251,14 @@ export default function AdminPlayers() {
                   <TableCell>
                     <Tooltip title="Редагувати" arrow>
                       <span>
-                        <IconButton size="small" onClick={() => handleEdit(p)}>
+                        <IconButton size="small" onClick={() => handleEdit(p)} disabled={saving}>
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </span>
                     </Tooltip>
                     <Tooltip title="Змінити пароль" arrow>
                       <span>
-                        <IconButton size="small" onClick={() => setPasswordDialog({ open: true, id: p.id })}>
+                        <IconButton size="small" onClick={() => setPasswordDialog({ open: true, id: p.id })} disabled={saving}>
                           <VpnKeyIcon fontSize="small" />
                         </IconButton>
                       </span>
@@ -326,7 +340,6 @@ export default function AdminPlayers() {
                   }
                   label="Активний"
                 />
-                {/* Аватар можна додати окремо */}
               </>
             )}
           </DialogContent>

@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { promises as fs } from 'fs';
-import path from 'path';
 
 export async function PATCH(request: Request) {
   try {
@@ -24,27 +22,26 @@ export async function PATCH(request: Request) {
       const formData = await request.formData();
       const file = formData.get('avatar');
       if (file && typeof file === 'object' && 'arrayBuffer' in file) {
-        // Видалити попередній аватар, якщо був
-        if (avatarUrl) {
-          const prevPath = path.join(process.cwd(), 'data', 'avatars', avatarUrl.replace(/^.*[\\/]/, ''));
-          try { await fs.unlink(prevPath); } catch {}
-        }
-        // Зберегти новий файл
+        // Read file as base64
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
         const fileName = `user_${user!.id}_${Date.now()}.${ext}`;
-        const filePath = path.join(process.cwd(), 'data', 'avatars', fileName);
         const buffer = Buffer.from(await file.arrayBuffer());
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, buffer);
-        // @ts-ignore
-        await prisma.$executeRawUnsafe(`UPDATE players SET avatar_url = ?, udt = ? WHERE id = ?`, fileName, new Date(), user!.id);
+        const base64 = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${buffer.toString('base64')}`;
+        await prisma.players.update({
+          where: { id: user.id },
+          data: {
+            avatar: base64,
+            avatar_url: fileName,
+            udt: new Date(),
+          },
+        });
         return NextResponse.json({ success: true, avatar_url: fileName });
       }
       return NextResponse.json({ error: 'Файл не знайдено' }, { status: 400 });
     }
 
-    // Якщо JSON (email, password, notes)
-    const { email, password, newPassword, notes } = await request.json();
+    // Якщо JSON (email, password, notes, avatar)
+    const { email, password, newPassword, notes, avatar } = await request.json();
     const updateData: any = {};
     if (email && email !== user.email) {
       const exists = await prisma.players.findUnique({ where: { email } });
@@ -55,6 +52,16 @@ export async function PATCH(request: Request) {
     }
     if (typeof notes === 'string' && notes !== user.notes) {
       updateData.notes = notes;
+    }
+    if (typeof avatar === 'string' && avatar.length > 100) {
+      // Accept base64 avatar from cropper
+      // Try to detect extension for avatar_url
+      let ext = 'jpg';
+      const match = avatar.match(/^data:image\/(\w+);base64,/);
+      if (match) ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+      const fileName = `user_${user!.id}_${Date.now()}.${ext}`;
+      updateData.avatar = avatar;
+      updateData.avatar_url = fileName;
     }
     if (newPassword) {
       if (!password) {
@@ -71,7 +78,7 @@ export async function PATCH(request: Request) {
     }
     updateData.udt = new Date();
     await prisma.players.update({ where: { id: user.id }, data: updateData });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, avatar_url: updateData.avatar_url });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Помилка сервера' }, { status: 500 });
   }

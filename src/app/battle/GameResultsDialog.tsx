@@ -9,11 +9,12 @@ interface GameResultsDialogProps {
   game: any;
   onResultsSaved: () => void;
   readOnly?: boolean;
-  confirmMode?: 'approve'|'reject'|null;
+  confirmMode?: 'approve'|null;
   adminViewOnly?: boolean;
+  adminEditMode?: boolean;
 }
 
-const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, game, onResultsSaved, readOnly = false, confirmMode = null, adminViewOnly = false }) => {
+const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, game, onResultsSaved, readOnly = false, confirmMode = null, adminViewOnly = false, adminEditMode = false }) => {
   const [vp1, setVp1] = useState(game.vp_1 || 0);
   const [vp2, setVp2] = useState(game.vp_2 || 0);
   const [gp1, setGp1] = useState(game.gp_1 || 0);
@@ -99,24 +100,6 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
       onResultsSaved();
     } catch (e: any) {
       setError(e.message || 'Не вдалося підтвердити результат');
-    } finally {
-      setSaving(false);
-    }
-  }
-  async function handleReject() {
-    setSaving(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/battle/plan/results', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ game_id: game.id, action: 'reject' })
-      });
-      if (!res.ok) throw new Error('Не вдалося відхилити результат');
-      onClose();
-      onResultsSaved();
-    } catch (e: any) {
-      setError(e.message || 'Не вдалося відхилити результат');
     } finally {
       setSaving(false);
     }
@@ -215,19 +198,17 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
         {adminViewOnly
-          ? 'Результат гри (тільки перегляд)'
-          : readOnly && confirmMode === 'approve'
-            ? 'Підтвердження результату гри'
-            : readOnly && confirmMode === 'reject'
-              ? 'Відхилення результату гри'
-              : readOnly
+          ? 'Результат гри (тільки перегляд, адмін)'
+          : (adminEditMode)
+            ? 'Редагування результату гри (адмін)'
+            : (readOnly && confirmMode === 'approve')
+              ? 'Підтвердження результату гри'
+              : (readOnly)
                 ? 'Перегляд результату гри'
-                : (!readOnly && !adminViewOnly && game.isAdmin)
-                  ? 'Редагування результату гри (адмін)'
-                  : 'Редагування результату гри'}
+                : 'Редагування результату гри'}
       </DialogTitle>
       <DialogContent>
-        {(!readOnly && !adminViewOnly && game.isAdmin) && (
+        {(adminEditMode) && (
           <FormControl fullWidth sx={{ mt: 1, mb: 2 }} size="small">
             <InputLabel id="admin-status-label">Статус гри</InputLabel>
             <Select
@@ -407,11 +388,10 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
         {!adminViewOnly && (readOnly ? (
           <>
             <Button onClick={handleApprove} variant="contained" color="success" disabled={saving}>Підтвердити</Button>
-            <Button onClick={handleReject} variant="outlined" color="error" disabled={saving}>Відхилити</Button>
           </>
         ) : (
-          <Button onClick={game.isAdmin ? handleAdminSave : handleSave} variant="contained" disabled={saving}>
-            {game.isAdmin ? 'Зберегти (адмін)' : 'Зберегти'}
+          <Button onClick={adminEditMode ? handleAdminSave : handleSave} variant="contained" disabled={saving}>
+            {adminEditMode ? 'Зберегти (адмін)' : 'Зберегти'}
           </Button>
         ))}
       </DialogActions>

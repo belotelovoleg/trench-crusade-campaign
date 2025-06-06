@@ -40,7 +40,7 @@ function WarbandApplyContent() {
     formData.append('roster', file);
     if (warbandId) formData.append('warband_id', warbandId);
     try {
-      const res = await fetch(warbandId ? '/api/warband-update' : '/api/warband-apply', {
+      const res = await fetch('/api/warband-apply' + (warbandId ? `?warband_id=${encodeURIComponent(warbandId)}` : ''), {
         method: 'POST',
         body: formData,
       });

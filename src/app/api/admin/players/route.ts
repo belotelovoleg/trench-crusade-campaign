@@ -24,6 +24,25 @@ export async function GET() {
       idt: true,
       udt: true,
       ldt: true,
+      warbands: {
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          catalogue_name: true,
+          rosters: {
+            select: {
+              id: true,
+              ducats: true,
+              model_count: true,
+              glory_points: true,
+              game_number: true,
+            },
+            orderBy: { id: 'asc' },
+          },
+        },
+        orderBy: { id: 'asc' },
+      },
     },
     orderBy: { id: 'asc' },
   });

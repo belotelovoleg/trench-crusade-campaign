@@ -174,6 +174,16 @@ export default function Home() {
                 color="primary"
                 fullWidth
                 component={Link}
+                href="/players"
+                sx={{ mb: 2 }}
+              >
+                Переглянути гравців кампанії
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                fullWidth
+                component={Link}
                 href="/table"
                 sx={{ mb: 2 }}
               >

@@ -1,8 +1,6 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 
 export async function POST(req: Request) {
   try {
@@ -37,12 +35,6 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ message: 'Користувача не знайдено.' }, { status: 401 });
     }
-    // Зберігаємо файл у data/rosters
-    const rostersDir = path.join(process.cwd(), 'data', 'rosters');
-    await mkdir(rostersDir, { recursive: true });
-    const codeName = `${user.id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.json`;
-    const filePath = path.join(rostersDir, codeName);
-    await writeFile(filePath, buffer);
     // --- Додаємо підтримку оновлення ростеру для існуючої варбанди ---
     const warbandIdParam = req.url.match(/warband_id=(\d+)/)?.[1];
     if (warbandIdParam) {
@@ -54,6 +46,10 @@ export async function POST(req: Request) {
       let catalogueName = json?.roster?.catalogueName || null;
       if (!catalogueName && Array.isArray(json?.roster?.forces) && json.roster.forces[0]?.catalogueName) {
         catalogueName = json.roster.forces[0].catalogueName;
+      }
+      // Перевіряємо, чи catalogueName співпадає з існуючим у варбанди
+      if (catalogueName && warband.catalogue_name && catalogueName !== warband.catalogue_name) {
+        return NextResponse.json({ message: 'Фракція у новому ростері не співпадає з фракцією варбанди. Оновлення заборонено.' }, { status: 400 });
       }
       // Витягуємо кількість дукатів, glory points і моделей з JSON (costs)
       let ducats = 0;
@@ -86,7 +82,7 @@ export async function POST(req: Request) {
       const createdRoster = await prisma.rosters.create({
         data: {
           warband_id: warband.id,
-          file_url: `/rosters/${codeName}`,
+          file_content: buffer.toString('utf-8'),
           description: json.description || null,
           ducats: ducats,
           glory_points: glory_points,
@@ -96,7 +92,7 @@ export async function POST(req: Request) {
       });
       // Оновлюємо статус варбанди на 'checking'
       await prisma.warbands.update({ where: { id: warband.id }, data: { status: 'checking' } });
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Оновлений ростер завантажено та відправлено на перевірку!',
         file_url: createdRoster.id ? `/api/roster?roster_id=${createdRoster.id}` : null
       });
@@ -159,7 +155,7 @@ export async function POST(req: Request) {
       const createdRoster = await prisma.rosters.create({
         data: {
           warband_id: warband.id,
-          file_url: `/rosters/${codeName}`,
+          file_content: buffer.toString('utf-8'),
           description: json.description || null,
           ducats: ducats,
           glory_points: glory_points,
@@ -168,7 +164,7 @@ export async function POST(req: Request) {
         },
       });
       // Після створення ростера, у відповіді API формуємо file_url як /api/roster?roster_id=ID
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: 'Ростер завантажено та відправлено на валідацію!',
         file_url: createdRoster.id ? `/api/roster?roster_id=${createdRoster.id}` : null
       });

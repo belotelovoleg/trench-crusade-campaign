@@ -127,7 +127,7 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
                     control={<Radio/>}
                     label={
                       <span style={{display:'flex',alignItems:'center',gap:8}}>
-                        <Avatar sx={{width:24,height:24}} src={player.avatar_url ? '/' + player.avatar_url : undefined} />
+                        <Avatar sx={{width:24,height:24}} src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : undefined} />
                         <span>{player.name||player.login}</span>
                       </span>
                     }
