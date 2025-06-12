@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button, Avatar, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemAvatar, ListItemText, Paper, Box, Chip, CircularProgress, IconButton } from "@mui/material";
+import { Button, Avatar, Typography, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemAvatar, ListItemText, Paper, Box, Chip, CircularProgress, IconButton, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
 import InfoIcon from '@mui/icons-material/Info';
 import DownloadIcon from '@mui/icons-material/Download';
 import FACTION_AVATARS from '../factionAvatars';
 import Slider from '@mui/material/Slider';
 
-export default function PlayersPage() {
-    const [players, setPlayers] = useState<any[]>([]);
+export default function PlayersPage() {    const [players, setPlayers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [notesDialog, setNotesDialog] = useState<{ open: boolean, notes: string, player: string }>({ open: false, notes: '', player: '' });
+    const [statusFilter, setStatusFilter] = useState<string>('all');
     // Track slider value per warband (by warband id)
     const [sliderValue, setSliderValue] = useState<{ [warbandId: number]: number }>({});
 
@@ -29,16 +29,43 @@ export default function PlayersPage() {
                 });
                 setSliderValue(sliderDefaults);
             })
-            .finally(() => setLoading(false));
-    }, []);
+            .finally(() => setLoading(false));    }, []);
+
+    // Filter players and warbands based on selected status
+    const filteredPlayers = players.filter(player => {
+        if (statusFilter === 'all') return true;
+        // Show player only if they have at least one warband with the selected status
+        return player.warbands?.some((wb: any) => wb.status === statusFilter);
+    }).map(player => ({
+        ...player,
+        warbands: statusFilter === 'all' 
+            ? player.warbands 
+            : player.warbands?.filter((wb: any) => wb.status === statusFilter) || []
+    }));
 
 if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}><CircularProgress /></Box>;
 
 return (
-    <Box sx={{ maxWidth: 900, margin: '32px auto', padding: 2 }}>
-        <Typography variant="h4" sx={{ mb: 3, fontWeight: 700 }}>Гравці кампанії</Typography>
-        <List>
-            {players.map(player => (
+    <Box sx={{ maxWidth: 900, margin: '32px auto', padding: 2 }}>        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>Гравці кампанії</Typography>
+            <div style={{ backgroundColor: 'rgba(255, 255, 255, 0.75)', padding: '8px', borderRadius: '8px' }}>
+                <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <InputLabel>Статус варбанди</InputLabel>
+                    <Select
+                        value={statusFilter}
+                        label="Статус варбанди"
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <MenuItem value="all">Усі статуси</MenuItem>
+                        <MenuItem value="active">Активна</MenuItem>
+                        <MenuItem value="checking">На перевірці</MenuItem>
+                        <MenuItem value="needs_update">Потребує оновлення ростеру</MenuItem>
+                        <MenuItem value="deleted">Видалена</MenuItem>
+                    </Select>
+                </FormControl>
+            </div>
+        </Box><List>
+            {filteredPlayers.map(player => (
                 <Paper key={player.id} sx={{ mb: 3, p: 2, boxShadow: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : undefined} sx={{ width: 56, height: 56 }} />

@@ -247,7 +247,7 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
               <>
                 <Typography sx={{mb:1}}>VP 1: <b>{vp1}</b></Typography>
                 <Typography>GP 1: <b>{gp1}</b></Typography>
-                <Typography>Reinforcements: <b>{game.player1_calledReinforcements ? 'Так' : 'Ні'}</b></Typography>
+                <Typography>Підкріплення: <b>{game.player1_calledReinforcements ? 'Так' : 'Ні'}</b></Typography>
                 <Typography sx={{mt:1}}>Injuries:</Typography>
                 {(game.player1_injuries||[]).length === 0 ? <Typography color="text.secondary">Немає</Typography> : (
                   <ul style={{margin:0,paddingLeft:18}}>{(game.player1_injuries||[]).map((inj:any,i:number)=>(<li key={i}>{inj.name}: {inj.roll}</li>))}</ul>
@@ -256,29 +256,68 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                 {(game.player1_skillAdvancements||[]).length === 0 ? <Typography color="text.secondary">Немає</Typography> : (
                   <ul style={{margin:0,paddingLeft:18}}>{(game.player1_skillAdvancements||[]).map((sk:any,i:number)=>(<li key={i}>{sk.name}: {sk.roll}</li>))}</ul>
                 )}
-                <Typography sx={{mt:1}}>Exploration Dice: <b>{game.player1_explorationDice ?? '-'}</b></Typography>
+                <Typography sx={{mt:1}}>Exploration Score: <b>{game.player1_explorationDice ?? '-'}</b></Typography>
               </>
             ) : (
-              <>
-                <TextField label="VP 1" type="number" value={vp1} onChange={e=>setVp1(e.target.value)} fullWidth sx={{mb:1}} />
-                <TextField label="GP 1" type="number" value={gp1} onChange={e=>setGp1(e.target.value)} fullWidth />
-                <FormControlLabel control={<Checkbox checked={reinforce1} onChange={e=>setReinforce1(e.target.checked)} />} label="Викликав Reinforcements" sx={{mt:1}} />
+              <>                <TextField 
+                  label="VP 1" 
+                  type="number" 
+                  value={vp1} 
+                  onChange={e=>setVp1(e.target.value)} 
+                  fullWidth 
+                  sx={{mb:1}}
+                  inputProps={{ min: 0, step: 1 }}
+                />
+                <TextField 
+                  label="GP 1" 
+                  type="number" 
+                  value={gp1} 
+                  onChange={e=>setGp1(e.target.value)} 
+                  fullWidth
+                  inputProps={{ min: 0, step: 1 }}
+                />
+                <FormControlLabel 
+                  control={<Checkbox 
+                    checked={reinforce1} 
+                    onChange={e=>{
+                      setReinforce1(e.target.checked);
+                      if (e.target.checked) {
+                        setExplore1('');
+                      }
+                    }} 
+                  />} 
+                  label="Викликав підкріплення" 
+                  sx={{mt:1}} 
+                />
                 <Typography sx={{mt:1}}>Injuries:</Typography>
                 {(injuries1.length === 0) && <Typography color="text.secondary">Немає</Typography>}
                 {injuries1.map((inj,i)=>(
                   <Box key={i} sx={{display:'flex',gap:1,mb:0.5}}>
                     <TextField size="small" value={inj.name} label="Ім'я" onChange={e=>{
                       const arr = [...injuries1]; arr[i].name = e.target.value; setInjuries1(arr);
-                    }} />
-                    <TextField size="small" type="number" value={inj.roll} label="Кидок" onChange={e=>{
-                      const arr = [...injuries1]; arr[i].roll = e.target.value; setInjuries1(arr);
-                    }} />
+                    }} />                    <TextField 
+                      size="small" 
+                      type="number" 
+                      value={inj.roll} 
+                      label="Кидок" 
+                      onChange={e=>{
+                        const arr = [...injuries1]; arr[i].roll = e.target.value; setInjuries1(arr);
+                      }}
+                      inputProps={{ min: 0, step: 1 }}
+                    />
                     <IconButton color="error" onClick={()=>{const arr = injuries1.filter((_,idx)=>idx!==i); setInjuries1(arr);}} title="Видалити рядок"><span style={{fontWeight:'bold'}}>&times;</span></IconButton>
                   </Box>
                 ))}
                 <Box sx={{display:'flex',gap:1,mb:1}}>
                   <TextField size="small" value={inj1Name} label="Ім'я" onChange={e=>setInj1Name(e.target.value)} />
-                  <TextField size="small" type="number" value={inj1Roll} label="Кидок" onChange={e=>setInj1Roll(e.target.value)} />
+                  <TextField 
+                    size="small" 
+                    type="number" 
+                    value={inj1Roll} 
+                    label="Кидок" 
+                    onChange={e=>setInj1Roll(e.target.value)}
+                    inputProps={{ min: 0, step: 1 }}
+                  />
                   <IconButton color="primary" onClick={handleAddInjury1} disabled={!(inj1Name&&inj1Roll)}><AddIcon /></IconButton>
                 </Box>
                 <Typography sx={{mt:1}}>Skill Advancements:</Typography>
@@ -287,19 +326,40 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                   <Box key={i} sx={{display:'flex',gap:1,mb:0.5}}>
                     <TextField size="small" value={sk.name} label="Ім'я" onChange={e=>{
                       const arr = [...skills1]; arr[i].name = e.target.value; setSkills1(arr);
-                    }} />
-                    <TextField size="small" type="number" value={sk.roll} label="Кидок" onChange={e=>{
-                      const arr = [...skills1]; arr[i].roll = Number(e.target.value); setSkills1(arr);
-                    }} />
+                    }} />                    <TextField 
+                      size="small" 
+                      type="number" 
+                      value={sk.roll} 
+                      label="Кидок" 
+                      onChange={e=>{
+                        const arr = [...skills1]; arr[i].roll = Number(e.target.value); setSkills1(arr);
+                      }}
+                      inputProps={{ min: 0, step: 1 }}
+                    />
                     <IconButton color="error" onClick={()=>{const arr = skills1.filter((_,idx)=>idx!==i); setSkills1(arr);}} title="Видалити рядок"><span style={{fontWeight:'bold'}}>&times;</span></IconButton>
                   </Box>
                 ))}
                 <Box sx={{display:'flex',gap:1,mb:1}}>
                   <TextField size="small" value={sk1Name} label="Ім'я" onChange={e=>setSk1Name(e.target.value)} />
-                  <TextField size="small" type="number" value={sk1Roll} label="Кидок" onChange={e=>setSk1Roll(e.target.value)} />
+                  <TextField 
+                    size="small" 
+                    type="number" 
+                    value={sk1Roll} 
+                    label="Кидок" 
+                    onChange={e=>setSk1Roll(e.target.value)}
+                    inputProps={{ min: 0, step: 1 }}
+                  />
                   <IconButton color="primary" onClick={handleAddSkill1} disabled={!(sk1Name&&sk1Roll)}><AddIcon /></IconButton>
-                </Box>
-                <TextField label="Exploration Dice" type="number" value={explore1} onChange={e=>setExplore1(e.target.value)} fullWidth sx={{mb:1}} />
+                </Box>                <TextField 
+                  label="Exploration Score" 
+                  type="number" 
+                  value={explore1} 
+                  onChange={e=>setExplore1(e.target.value)} 
+                  fullWidth 
+                  sx={{mb:1}}
+                  inputProps={{ min: 0, step: 1 }}
+                  disabled={reinforce1}
+                />
               </>
             )}
           </Box>
@@ -324,7 +384,7 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
               <>
                 <Typography sx={{mb:1}}>VP 2: <b>{vp2}</b></Typography>
                 <Typography>GP 2: <b>{gp2}</b></Typography>
-                <Typography>Reinforcements: <b>{game.player2_calledReinforcements ? 'Так' : 'Ні'}</b></Typography>
+                <Typography>Підкріплення: <b>{game.player2_calledReinforcements ? 'Так' : 'Ні'}</b></Typography>
                 <Typography sx={{mt:1}}>Injuries:</Typography>
                 {(game.player2_injuries||[]).length === 0 ? <Typography color="text.secondary">Немає</Typography> : (
                   <ul style={{margin:0,paddingLeft:18}}>{(game.player2_injuries||[]).map((inj:any,i:number)=>(<li key={i}>{inj.name}: {inj.roll}</li>))}</ul>
@@ -333,29 +393,68 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                 {(game.player2_skillAdvancements||[]).length === 0 ? <Typography color="text.secondary">Немає</Typography> : (
                   <ul style={{margin:0,paddingLeft:18}}>{(game.player2_skillAdvancements||[]).map((sk:any,i:number)=>(<li key={i}>{sk.name}: {sk.roll}</li>))}</ul>
                 )}
-                <Typography sx={{mt:1}}>Exploration Dice: <b>{game.player2_explorationDice ?? '-'}</b></Typography>
+                <Typography sx={{mt:1}}>Exploration Score: <b>{game.player2_explorationDice ?? '-'}</b></Typography>
               </>
             ) : (
-              <>
-                <TextField label="VP 2" type="number" value={vp2} onChange={e=>setVp2(e.target.value)} fullWidth sx={{mb:1}} />
-                <TextField label="GP 2" type="number" value={gp2} onChange={e=>setGp2(e.target.value)} fullWidth />
-                <FormControlLabel control={<Checkbox checked={reinforce2} onChange={e=>setReinforce2(e.target.checked)} />} label="Викликав Reinforcements" sx={{mt:1}} />
+              <>                <TextField 
+                  label="VP 2" 
+                  type="number" 
+                  value={vp2} 
+                  onChange={e=>setVp2(e.target.value)} 
+                  fullWidth 
+                  sx={{mb:1}}
+                  inputProps={{ min: 0, step: 1 }}
+                />
+                <TextField 
+                  label="GP 2" 
+                  type="number" 
+                  value={gp2} 
+                  onChange={e=>setGp2(e.target.value)} 
+                  fullWidth
+                  inputProps={{ min: 0, step: 1 }}
+                />
+                <FormControlLabel 
+                  control={<Checkbox 
+                    checked={reinforce2} 
+                    onChange={e=>{
+                      setReinforce2(e.target.checked);
+                      if (e.target.checked) {
+                        setExplore2('');
+                      }
+                    }} 
+                  />} 
+                  label="Викликав підкріплення" 
+                  sx={{mt:1}} 
+                />
                 <Typography sx={{mt:1}}>Injuries:</Typography>
                 {(injuries2.length === 0) && <Typography color="text.secondary">Немає</Typography>}
                 {injuries2.map((inj,i)=>(
                   <Box key={i} sx={{display:'flex',gap:1,mb:0.5}}>
                     <TextField size="small" value={inj.name} label="Ім'я" onChange={e=>{
                       const arr = [...injuries2]; arr[i].name = e.target.value; setInjuries2(arr);
-                    }} />
-                    <TextField size="small" type="number" value={inj.roll} label="Кидок" onChange={e=>{
-                      const arr = [...injuries2]; arr[i].roll = e.target.value; setInjuries2(arr);
-                    }} />
+                    }} />                    <TextField 
+                      size="small" 
+                      type="number" 
+                      value={inj.roll} 
+                      label="Кидок" 
+                      onChange={e=>{
+                        const arr = [...injuries2]; arr[i].roll = e.target.value; setInjuries2(arr);
+                      }}
+                      inputProps={{ min: 0, step: 1 }}
+                    />
                     <IconButton color="error" onClick={()=>{const arr = injuries2.filter((_,idx)=>idx!==i); setInjuries2(arr);}} title="Видалити рядок"><span style={{fontWeight:'bold'}}>&times;</span></IconButton>
                   </Box>
                 ))}
                 <Box sx={{display:'flex',gap:1,mb:1}}>
                   <TextField size="small" value={inj2Name} label="Ім'я" onChange={e=>setInj2Name(e.target.value)} />
-                  <TextField size="small" type="number" value={inj2Roll} label="Кидок" onChange={e=>setInj2Roll(e.target.value)} />
+                  <TextField 
+                    size="small" 
+                    type="number" 
+                    value={inj2Roll} 
+                    label="Кидок" 
+                    onChange={e=>setInj2Roll(e.target.value)}
+                    inputProps={{ min: 0, step: 1 }}
+                  />
                   <IconButton color="primary" onClick={handleAddInjury2} disabled={!(inj2Name&&inj2Roll)}><AddIcon /></IconButton>
                 </Box>
                 <Typography sx={{mt:1}}>Skill Advancements:</Typography>
@@ -364,19 +463,40 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                   <Box key={i} sx={{display:'flex',gap:1,mb:0.5}}>
                     <TextField size="small" value={sk.name} label="Ім'я" onChange={e=>{
                       const arr = [...skills2]; arr[i].name = e.target.value; setSkills2(arr);
-                    }} />
-                    <TextField size="small" type="number" value={sk.roll} label="Кидок" onChange={e=>{
-                      const arr = [...skills2]; arr[i].roll = Number(e.target.value); setSkills2(arr);
-                    }} />
+                    }} />                    <TextField 
+                      size="small" 
+                      type="number" 
+                      value={sk.roll} 
+                      label="Кидок" 
+                      onChange={e=>{
+                        const arr = [...skills2]; arr[i].roll = Number(e.target.value); setSkills2(arr);
+                      }}
+                      inputProps={{ min: 0, step: 1 }}
+                    />
                     <IconButton color="error" onClick={()=>{const arr = skills2.filter((_,idx)=>idx!==i); setSkills2(arr);}} title="Видалити рядок"><span style={{fontWeight:'bold'}}>&times;</span></IconButton>
                   </Box>
                 ))}
                 <Box sx={{display:'flex',gap:1,mb:1}}>
                   <TextField size="small" value={sk2Name} label="Ім'я" onChange={e=>setSk2Name(e.target.value)} />
-                  <TextField size="small" type="number" value={sk2Roll} label="Кидок" onChange={e=>setSk2Roll(e.target.value)} />
+                  <TextField 
+                    size="small" 
+                    type="number" 
+                    value={sk2Roll} 
+                    label="Кидок" 
+                    onChange={e=>setSk2Roll(e.target.value)}
+                    inputProps={{ min: 0, step: 1 }}
+                  />
                   <IconButton color="primary" onClick={handleAddSkill2} disabled={!(sk2Name&&sk2Roll)}><AddIcon /></IconButton>
-                </Box>
-                <TextField label="Exploration Dice" type="number" value={explore2} onChange={e=>setExplore2(e.target.value)} fullWidth sx={{mb:1}} />
+                </Box>                <TextField 
+                  label="Exploration Score" 
+                  type="number" 
+                  value={explore2} 
+                  onChange={e=>setExplore2(e.target.value)} 
+                  fullWidth 
+                  sx={{mb:1}}
+                  inputProps={{ min: 0, step: 1 }}
+                  disabled={reinforce2}
+                />
               </>
             )}
           </Box>

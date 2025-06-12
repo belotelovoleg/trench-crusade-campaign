@@ -33,6 +33,14 @@ const statusMap: Record<string, string> = {
   deleted: 'Видалена',
 };
 
+const gameStatusMap: Record<string, string> = {
+  planned: 'Запланована',
+  active: 'Триває',
+  pending_approval: 'Очікує підтвердження',
+  finished: 'Завершена',
+  cancelled: 'Скасована',
+};
+
 export const dynamic = "force-dynamic";
 
 export default function TablePage() {
@@ -111,10 +119,12 @@ export default function TablePage() {
                       {Array.from({ length: 12 }).map((_, i) => {
                         const games = w.games?.filter((g) => g.number === i + 1) || [];
                         if (games.length > 0) {
-                          return (
-                            <TableCell key={i}>
+                          return (                            <TableCell key={i}>
                               {games.map((game, idx) => (
                                 <div key={game.id} style={{fontSize:12, marginBottom: games.length > 1 ? 8 : 0}}>
+                                  <div style={{fontWeight: 500, color: '#666', marginBottom: 2}}>
+                                    {gameStatusMap[game.status] || game.status}
+                                  </div>
                                   <b>vs {game.opponent}</b><br/>
                                   VP: <b>{game.vp}</b> / <b>{game.opponent_vp}</b><br/>
                                   GP: <b>{game.gp}</b> / <b>{game.opponent_gp}</b>
