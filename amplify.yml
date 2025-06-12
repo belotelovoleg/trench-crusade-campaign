@@ -8,25 +8,24 @@ frontend:
   phases:
     preBuild:
       commands:
-        - echo "🚀 Starting pre-build phase..."
-        - echo "📦 Installing dependencies..."
+        - echo "Starting pre-build phase..."
+        - echo "Installing dependencies..."
         - npm ci
-        - echo "✅ Dependencies installed"
+        - echo "Dependencies installed"
     build:
       commands:
-        - echo "🔧 Starting build phase..."
-        # Create .env.production file with build-time environment variables
-        - echo "📝 Creating .env.production file with environment variables..."
+        - echo "Starting build phase..."
+        - echo "Creating .env.production file with environment variables..."
         - echo "DATABASE_URL=$DATABASE_URL" > .env.production
         - echo "NODE_ENV=production" >> .env.production
-        - echo "✅ Created .env.production with $(wc -l < .env.production) variables"
+        - echo "Created .env.production file"
         - cat .env.production
-        - echo "🔄 Generating Prisma client..."
+        - echo "Generating Prisma client..."
         - npx prisma generate
-        - echo "✅ Prisma client generated"
-        - echo "🏗️ Building Next.js application..."
+        - echo "Prisma client generated"
+        - echo "Building Next.js application..."
         - npm run build
-        - echo "✅ Build completed successfully"
+        - echo "Build completed successfully"
   artifacts:
     baseDirectory: .next
     files:
