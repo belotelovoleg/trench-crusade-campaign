@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -16,8 +16,8 @@ model games {
   vp_2                                  Int?         @default(0)
   gp_1                                  Int?         @default(0)
   gp_2                                  Int?         @default(0)
-  idt                                   DateTime?    @default(now()) @db.DateTime(0)
-  udt                                   DateTime?    @default(now()) @db.DateTime(0)
+  idt                                   DateTime?    @default(now())
+  udt                                   DateTime?    @default(now())
   warband_1_gameNumber                  Int?
   warband_2_gameNumber                  Int?
   warband_1_roster_id                   Int?
@@ -47,57 +47,57 @@ model games {
 
 model players {
   id            Int        @id @default(autoincrement())
-  login         String     @unique(map: "login") @db.VarChar(50)
-  password_hash String     @db.VarChar(255)
-  name          String?    @db.VarChar(100)
-  email         String?    @unique(map: "email") @db.VarChar(100)
-  avatar_url    String?    @db.VarChar(255)
-  avatar        String?    @db.LongText
-  notes         String?    @db.Text
+  login         String     @unique(map: "login")
+  password_hash String
+  name          String?
+  email         String?    @unique(map: "email")
+  avatar_url    String?
+  avatar        String?
+  notes         String?
   is_admin      Boolean?   @default(false)
   is_active     Boolean    @default(true)
-  idt           DateTime?  @default(now()) @db.DateTime(0)
-  udt           DateTime?  @default(now()) @db.DateTime(0)
-  ldt           DateTime?  @db.DateTime(0)
+  idt           DateTime?  @default(now())
+  udt           DateTime?  @default(now())
+  ldt           DateTime?
   warbands      warbands[]
 }
 
 model rosters {
   id           Int       @id @default(autoincrement())
   warband_id   Int
-  file_url     String?   @db.Text
-  file_content String?   @db.LongText
-  description  String?   @db.Text
-  uploaded_at  DateTime? @default(now()) @db.DateTime(0)
+  file_url     String?
+  file_content String?
+  description  String?
+  uploaded_at  DateTime? @default(now())
   ducats       Int?      @default(0)
   model_count  Int?      @default(0)
   glory_points Int?      @default(0)
   game_number  Int?
   warbands     warbands  @relation(fields: [warband_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "rosters_ibfk_1")
 
-  @@index([warband_id], map: "warband_id")
+  @@index([warband_id], map: "rosters_warband_id")
 }
 
 model stories {
   id         Int       @id @default(autoincrement())
   warband_id Int
   game_id    Int?
-  text       String?   @db.Text
-  posted_at  DateTime? @default(now()) @db.DateTime(0)
+  text       String?
+  posted_at  DateTime? @default(now())
   warbands   warbands  @relation(fields: [warband_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stories_ibfk_1")
 
-  @@index([warband_id], map: "warband_id")
+  @@index([warband_id], map: "stories_warband_id")
 }
 
 model warbands {
   id                                 Int           @id @default(autoincrement())
   player_id                          Int
-  name                               String?       @db.VarChar(100)
+  name                               String?
   games_count                        Int?          @default(0)
   victory_points                     Int?          @default(0)
-  idt                                DateTime?     @default(now()) @db.DateTime(0)
-  udt                                DateTime?     @default(now()) @db.DateTime(0)
-  catalogue_name                     String?       @db.VarChar(100)
+  idt                                DateTime?     @default(now())
+  udt                                DateTime?     @default(now())
+  catalogue_name                     String?
   status                             WarbandStatus @default(checking)
   games_games_warband_1_idTowarbands games[]       @relation("games_warband_1_idTowarbands")
   games_games_warband_2_idTowarbands games[]       @relation("games_warband_2_idTowarbands")
@@ -110,8 +110,8 @@ model warbands {
 
 model about_campaign {
   id        Int      @id @default(1)
-  content   String?  @db.LongText
-  updatedAt DateTime @default(now()) @updatedAt @db.DateTime(0)
+  content   String?
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 enum games_status {
