@@ -301,7 +301,7 @@ a.secondary {
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 8px;
   align-items: stretch;
 }
 

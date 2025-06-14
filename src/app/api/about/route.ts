@@ -4,5 +4,13 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   const about = await prisma.about_campaign.findFirst();
-  return NextResponse.json({ content: about?.content || '' });
+  
+  const response = NextResponse.json({ content: about?.content || '' });
+  
+  // Disable caching to get fresh content immediately
+  response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+  
+  return response;
 }

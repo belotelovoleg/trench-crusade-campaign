@@ -15,9 +15,13 @@ export default function Home() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState<string>('');
-
   useEffect(() => {
-    fetch('/api/about')
+    fetch('/api/about', {
+      cache: 'no-cache',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    })
       .then(res => res.json())
       .then(data => setAbout(data.content || ''))
       .finally(() => setAboutLoading(false));
@@ -101,7 +105,7 @@ export default function Home() {
                   color="secondary"
                   fullWidth
                   onClick={() => location.href = '/admin'}
-                  sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
+                  sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
                 >
                   Перейти до адмін-частини
                 </Button>
@@ -111,7 +115,7 @@ export default function Home() {
                 color="primary"
                 fullWidth
                 onClick={() => location.href = '/profile'}
-                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
+                sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Редагувати профіль
               </Button>
@@ -154,11 +158,10 @@ export default function Home() {
                     return (                      <div key={w.name + idx} style={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        alignItems: 'flex-start', 
-                        marginBottom: 12, 
+                        alignItems: 'flex-start',                        marginBottom: 8, 
                         border: '1px solid #e0e0e0', 
                         borderRadius: 8, 
-                        padding: '12px', 
+                        padding: '8px', 
                         background: '#fafbfc',
                         boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
                       }}>
@@ -248,7 +251,7 @@ export default function Home() {
                 fullWidth
                 component={Link}
                 href="/players"
-                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
+                sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Переглянути гравців кампанії
               </Button>
@@ -258,19 +261,18 @@ export default function Home() {
                 fullWidth
                 component={Link}
                 href="/table"
-                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
+                sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Таблиця результатів
               </Button>
-              {/* Кнопка подати ростер тільки якщо не більше 1 не видаленої варбанди */}
-              {user && (user.warbands?.filter((w: any) => w.status !== 'deleted').length ?? 0) < 2 && (
+              {/* Кнопка подати ростер тільки якщо не більше 1 не видаленої варбанди */}              {user && (user.warbands?.filter((w: any) => w.status !== 'deleted').length ?? 0) < 2 && (
                 <Button
                   variant="contained"
                   color="primary"
                   fullWidth
                   component={Link}
                   href="/warband-apply"
-                  sx={{ mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
+                  sx={{ mt: { xs: 0.5, sm: 0.8 }, mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
                 >
                   Подати ростер на участь у кампанії
                 </Button>
@@ -285,13 +287,12 @@ export default function Home() {
                 Вийти
               </Button>
             </>
-          ) : (            <>
-              <Button 
+          ) : (            <>              <Button 
                 variant="contained" 
                 color="primary" 
                 fullWidth 
                 onClick={() => location.href = '/login'}
-                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1.2, sm: 1.5 }, fontSize: { xs: '1rem', sm: '1.1rem' } }}
+                sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1.2, sm: 1.5 }, fontSize: { xs: '1rem', sm: '1.1rem' } }}
               >
                 Увійти
               </Button>
