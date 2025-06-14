@@ -10,7 +10,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import GameResultsDialog from '../../battle/GameResultsDialog';
-import { CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
+import { Box, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import Tooltip from '@mui/material/Tooltip';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
@@ -71,51 +71,84 @@ export default function AdminGamesPage() {
         {!loading && !error && (
           <TableContainer component={Paper}>
             <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell colSpan={2}>Гравець 1</TableCell>
-                  <TableCell colSpan={2}>Варбанд 1</TableCell>
-                  <TableCell colSpan={2}>Гравець 2</TableCell>
-                  <TableCell colSpan={2}>Варбанд 2</TableCell>
+              <TableHead>                <TableRow>
+                  <TableCell>Гравець 1</TableCell>
+                  <TableCell>Варбанд 1</TableCell>
+                  <TableCell>Гравець 2</TableCell>
+                  <TableCell>Варбанд 2</TableCell>
                   <TableCell>UDT</TableCell>
                   <TableCell>Дії</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {games.map(game => (
-                  <TableRow key={game.id}>
-                    <TableCell>
-                      {game.warbands_games_warband_1_idTowarbands?.players?.avatar_url && (
-                        <Image src={`/api/avatar/${game.warbands_games_warband_1_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}`} alt="avatar" width={32} height={32} style={{ borderRadius: '50%' }} />
+                  <TableRow key={game.id}>                    <TableCell>
+                      {game.warbands_games_warband_1_idTowarbands?.players && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Image 
+                            src={game.warbands_games_warband_1_idTowarbands.players.avatar_url 
+                              ? `/api/avatar/${game.warbands_games_warband_1_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}` 
+                              : '/api/avatar/default'} 
+                            alt="avatar" 
+                            width={32} 
+                            height={32} 
+                            style={{ borderRadius: '50%', marginRight: '4px' }} 
+                          />
+                          <span>{game.warbands_games_warband_1_idTowarbands?.players?.name || '—'}</span>
+                        </Box>
                       )}
                     </TableCell>
-                    <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_1_idTowarbands?.players?.name || '—'}</TableCell>
                     <TableCell>
                       {game.warbands_games_warband_1_idTowarbands?.catalogue_name && (
-                        <Tooltip title={game.warbands_games_warband_1_idTowarbands.catalogue_name} arrow>
-                          <span>
-                            <Image src={FACTION_AVATARS[game.warbands_games_warband_1_idTowarbands.catalogue_name] || '/swords.png'} alt="faction" width={32} height={32} style={{ borderRadius: 4 }} />
-                          </span>
-                        </Tooltip>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Tooltip title={game.warbands_games_warband_1_idTowarbands.catalogue_name} arrow>
+                            <span>
+                              <Image 
+                                src={FACTION_AVATARS[game.warbands_games_warband_1_idTowarbands.catalogue_name] || '/swords.png'} 
+                                alt="faction" 
+                                width={32} 
+                                height={32} 
+                                style={{ borderRadius: 4, marginRight: '4px' }} 
+                              />
+                            </span>
+                          </Tooltip>
+                          <span>{game.warbands_games_warband_1_idTowarbands?.name || '—'}</span>
+                        </Box>
+                      )}
+                    </TableCell>                    <TableCell>
+                      {game.warbands_games_warband_2_idTowarbands?.players && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Image 
+                            src={game.warbands_games_warband_2_idTowarbands.players.avatar_url 
+                              ? `/api/avatar/${game.warbands_games_warband_2_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}` 
+                              : '/api/avatar/default'} 
+                            alt="avatar" 
+                            width={32} 
+                            height={32} 
+                            style={{ borderRadius: '50%', marginRight: '4px' }} 
+                          />
+                          <span>{game.warbands_games_warband_2_idTowarbands?.players?.name || '—'}</span>
+                        </Box>
                       )}
                     </TableCell>
-                    <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_1_idTowarbands?.name || '—'}</TableCell>
-                    <TableCell>
-                      {game.warbands_games_warband_2_idTowarbands?.players?.avatar_url && (
-                        <Image src={`/api/avatar/${game.warbands_games_warband_2_idTowarbands.players.avatar_url.replace(/^.*[\\/]/, '')}`} alt="avatar" width={32} height={32} style={{ borderRadius: '50%' }} />
-                      )}
-                    </TableCell>
-                    <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_2_idTowarbands?.players?.name || '—'}</TableCell>
                     <TableCell>
                       {game.warbands_games_warband_2_idTowarbands?.catalogue_name && (
-                        <Tooltip title={game.warbands_games_warband_2_idTowarbands.catalogue_name} arrow>
-                          <span>
-                            <Image src={FACTION_AVATARS[game.warbands_games_warband_2_idTowarbands.catalogue_name] || '/swords.png'} alt="faction" width={32} height={32} style={{ borderRadius: 4 }} />
-                          </span>
-                        </Tooltip>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Tooltip title={game.warbands_games_warband_2_idTowarbands.catalogue_name} arrow>
+                            <span>
+                              <Image 
+                                src={FACTION_AVATARS[game.warbands_games_warband_2_idTowarbands.catalogue_name] || '/swords.png'} 
+                                alt="faction" 
+                                width={32} 
+                                height={32} 
+                                style={{ borderRadius: 4, marginRight: '4px' }} 
+                              />
+                            </span>
+                          </Tooltip>
+                          <span>{game.warbands_games_warband_2_idTowarbands?.name || '—'}</span>
+                        </Box>
                       )}
                     </TableCell>
-                    <TableCell style={{ minWidth: 120 }}>{game.warbands_games_warband_2_idTowarbands?.name || '—'}</TableCell>
                     <TableCell>{game.udt ? new Date(game.udt).toLocaleString('uk-UA') : '—'}</TableCell>
                     <TableCell>
                       <Tooltip title="Переглянути" arrow>

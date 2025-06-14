@@ -13,6 +13,7 @@ import {
   Button,
   CircularProgress,
   Alert,
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -203,11 +204,8 @@ export default function AdminPlayers() {
         <TableContainer component={Paper}>
           <Table size="small">
             <TableHead>
-              <TableRow>
-                <TableCell onClick={() => handleSort('id')} style={{cursor:'pointer'}}>ID{orderBy==='id' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
-                <TableCell>Аватар</TableCell>
-                <TableCell onClick={() => handleSort('login')} style={{cursor:'pointer'}}>Логін{orderBy==='login' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
-                <TableCell onClick={() => handleSort('name')} style={{cursor:'pointer'}}>Ім'я{orderBy==='name' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
+              <TableRow>                <TableCell>ID{orderBy==='id' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
+                <TableCell>Користувач</TableCell>
                 <TableCell onClick={() => handleSort('email')} style={{cursor:'pointer'}}>Email{orderBy==='email' ? (order==='asc'?' ▲':' ▼') : ''}</TableCell>
                 <TableCell>Адмін</TableCell>
                 <TableCell>Активний</TableCell>
@@ -219,23 +217,20 @@ export default function AdminPlayers() {
             </TableHead>
             <TableBody>
               {sortedPlayers.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>{p.id}</TableCell>
+                <TableRow key={p.id}>                  <TableCell>{p.id}</TableCell>
                   <TableCell>
-                    <Tooltip title={p.name || p.login || ''} arrow>
-                      {p.avatar_url ? (
-                        <img
-                          src={`/api/avatar/${p.avatar_url}`}
-                          alt="avatar"
-                          style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#eee' }}
-                        />
-                      ) : (
-                        <span style={{ display: 'inline-block', width: 32, height: 32, borderRadius: '50%', background: '#eee', textAlign: 'center', lineHeight: '32px', color: '#888' }}>—</span>
-                      )}
-                    </Tooltip>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <img
+                        src={p.avatar_url ? `/api/avatar/${p.avatar_url}` : '/api/avatar/default'}
+                        alt="avatar"
+                        style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', background: '#eee', marginRight: '4px' }}
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 'bold' }}>{p.login}</span>
+                        {p.name && <span style={{ fontSize: '0.85em' }}>{p.name}</span>}
+                      </div>
+                    </Box>
                   </TableCell>
-                  <TableCell>{p.login}</TableCell>
-                  <TableCell>{p.name}</TableCell>
                   <TableCell>{p.email}</TableCell>
                   <TableCell>{p.is_admin ? "Так" : "Ні"}</TableCell>
                   <TableCell>

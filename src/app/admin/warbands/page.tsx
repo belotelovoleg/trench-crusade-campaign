@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Alert, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Select, MenuItem, FormControl, InputLabel, Tooltip } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, CircularProgress, Alert, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Select, MenuItem, FormControl, InputLabel, Tooltip, Box } from "@mui/material";
 import adminStyles from '../admin.module.css';
 import FACTION_AVATARS from '../../factionAvatars';
 import IconButton from '@mui/material/IconButton';
@@ -13,7 +13,14 @@ interface WarbandRow {
   status: string;
   player: { id: number; login: string; name: string | null; avatar_url?: string | null };
   catalogue_name?: string | null;
-  rosters: { id: number; file_url: string | null; ducats?: number | null; game_number?: number }[];
+  rosters: { 
+    id: number; 
+    file_url: string | null; 
+    ducats?: number | null; 
+    game_number?: number;
+    model_count?: number;
+    glory_points?: number;
+  }[];
 }
 
 export const dynamic = "force-dynamic";
@@ -52,9 +59,19 @@ export default function AdminWarbands() {
           setError(msg);
           setLoading(false);
           return;
-        }
-        const wbData = await wbRes.json();
-        setWarbands(wbData.warbands || []);
+        }        const wbData = await wbRes.json();
+        const warbandList = wbData.warbands || [];
+        
+        // Initialize selectedRosterId with the latest roster for each warband
+        const initialSelectedRosters: {[key: number]: string | null} = {};
+        warbandList.forEach((wb: WarbandRow) => {
+          if (wb.rosters && wb.rosters.length > 0) {
+            initialSelectedRosters[wb.id] = getLatestRosterId(wb.rosters);
+          }
+        });
+        
+        setSelectedRosterId(initialSelectedRosters);
+        setWarbands(warbandList);
       } catch (e: any) {
         setError("Не вдалося завантажити дані: " + (e?.message || e));
       } finally {
@@ -88,6 +105,23 @@ export default function AdminWarbands() {
     return '';
   }
 
+  // Helper function to get the latest roster based on game_number
+  const getLatestRosterId = (rosters: any[]) => {
+    if (!rosters || rosters.length === 0) return null;
+    
+    // Sort by game_number in descending order
+    const sortedRosters = [...rosters].sort((a, b) => {
+      const gameNumberA = typeof a.game_number === 'number' ? a.game_number : 0;
+      const gameNumberB = typeof b.game_number === 'number' ? b.game_number : 0;
+      return gameNumberB - gameNumberA; // Descending order
+    });
+    
+    // Return the file_url of the latest roster
+    return sortedRosters[0].file_url ? 
+      sortedRosters[0].file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : 
+      '';
+  };
+
   if (loading) return (
     <div className={adminStyles.adminContainer}>
       <div style={{ minHeight: '100vh', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -106,11 +140,10 @@ export default function AdminWarbands() {
           <Alert severity="error" sx={{ mb: 2 }}>{replaceError}</Alert>
         )}
         <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
+          <Table size="small">            <TableHead>
               <TableRow>
-                <TableCell colSpan={2}>Гравець</TableCell>
-                <TableCell colSpan={2}>Варбанда</TableCell>
+                <TableCell>Гравець</TableCell>
+                <TableCell>Варбанда</TableCell>
                 <TableCell>Статус</TableCell>
                 <TableCell>Ростери</TableCell>
                 <TableCell>Оповідання</TableCell>
@@ -118,26 +151,32 @@ export default function AdminWarbands() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {warbands.map((w, idx) => (
-                <TableRow key={w.id}>
-                  <TableCell>
-                    {w.player && w.player.avatar_url && (
-                      <img src={'/api/avatar/' + w.player.avatar_url} alt="avatar" style={{width:32,height:32,borderRadius:'50%'}} />
-                    )}
-                  </TableCell>
-                  <TableCell>{w.player ? (w.player.name || w.player.login) : '—'}</TableCell>
-                  <TableCell>
-                    {w.catalogue_name && FACTION_AVATARS[w.catalogue_name] ? (
-                      <Tooltip title={w.catalogue_name} arrow>
-                        <img
-                          src={FACTION_AVATARS[w.catalogue_name]}
-                          alt={w.catalogue_name || ''}
-                          style={{width:32,height:32,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}}
+              {warbands.map((w, idx) => (                <TableRow key={w.id}>                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {w.player && (
+                        <img 
+                          src={w.player.avatar_url ? `/api/avatar/${w.player.avatar_url}` : '/api/avatar/default'} 
+                          alt="avatar" 
+                          style={{width:32, height:32, borderRadius:'50%', marginRight: '4px'}} 
                         />
-                      </Tooltip>
-                    ) : null}
+                      )}
+                      <span>{w.player ? (w.player.name || w.player.login) : '—'}</span>
+                    </Box>
                   </TableCell>
-                  <TableCell>{w.name}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {w.catalogue_name && FACTION_AVATARS[w.catalogue_name] ? (
+                        <Tooltip title={w.catalogue_name} arrow>
+                          <img
+                            src={FACTION_AVATARS[w.catalogue_name]}
+                            alt={w.catalogue_name || ''}
+                            style={{width:32, height:32, borderRadius:'50%', objectFit:'cover', marginRight: '4px'}}
+                          />
+                        </Tooltip>
+                      ) : null}
+                      <span>{w.name}</span>
+                    </Box>
+                  </TableCell>
                   <TableCell>
                     <Select
                       size="small"
@@ -162,24 +201,29 @@ export default function AdminWarbands() {
                       {warbandStatusIcon(w.status)}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <TableCell>                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <FormControl size="small" sx={{ minWidth: 220 }}>
                         <InputLabel id={`roster-select-label-${w.id}`}>Ростери</InputLabel>
                         <Select
                           labelId={`roster-select-label-${w.id}`}
-                          value={selectedRosterId[w.id] || (w.rosters?.[0]?.file_url ? w.rosters[0].file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : '')}
+                          value={selectedRosterId[w.id] || getLatestRosterId(w.rosters)}
                           label="Ростери"
                           onChange={(e) => {
-                            setSelectedRosterId((prev) => ({ ...prev, [w.id]: e.target.value }));
-                          }}
+                            setSelectedRosterId((prev) => ({ ...prev, [w.id]: e.target.value }));                          }}
                           disabled={!w.rosters || w.rosters.length === 0}
                           size="small"
-                          sx={{ minWidth: 120 }}
-                        >
-                          {w.rosters && w.rosters.map((r, i) => (
+                          sx={{ minWidth: 220 }}
+                        >{w.rosters && w.rosters.map((r, i) => (
                             <MenuItem key={r.id} value={r.file_url ? r.file_url.replace(/^\/rosters\//, '').replace(/\.json$/, '') : ''} dense>
-                              {typeof r.game_number === 'number' ? `Гра: ${r.game_number}` : i+1} ({typeof r.ducats === 'number' ? r.ducats : '?'} дукатів)
+                              {typeof r.game_number === 'number' ? `Гра: ${r.game_number}` : i+1}
+                              {' '}                              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 1, marginLeft: 4 }}>
+                                <span role="img" aria-label="models">🧍</span>
+                                <span>{typeof r.model_count === 'number' ? r.model_count : '?'}</span>
+                                <span role="img" aria-label="ducats" style={{ marginLeft: 4 }}>💰</span>
+                                <span>{typeof r.ducats === 'number' ? r.ducats : '?'}</span>
+                                <span role="img" aria-label="glory" style={{ marginLeft: 4 }}>⭐</span>
+                                <span>{typeof r.glory_points === 'number' ? r.glory_points : '0'}</span>
+                              </span>
                             </MenuItem>
                           ))}
                         </Select>

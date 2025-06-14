@@ -284,9 +284,8 @@ function BattlePageContent() {
     const gloryPoints = oppRoster?.glory_points ?? 0;
     opponentPlannedBlock = (
       <Box sx={{mt:2, mb:1, p:1, border:'1px solid #eee', borderRadius:2, background:'#fafbfc'}}>
-        <Typography variant="subtitle2" sx={{mb:0.5}}>Супротивник:</Typography>
-        <Box sx={{display:'flex',alignItems:'center',gap:1,flexWrap:'wrap', mb:1}}>
-          <Avatar src={oppPlayer?.avatar_url ? `/api/avatar/${oppPlayer.avatar_url.replace(/^.*[\\/]/, '')}` : undefined} sx={{width:32,height:32}} />
+        <Typography variant="subtitle2" sx={{mb:0.5}}>Супротивник:</Typography>        <Box sx={{display:'flex',alignItems:'center',gap:1,flexWrap:'wrap', mb:1}}>
+          <Avatar src={oppPlayer?.avatar_url ? `/api/avatar/${oppPlayer.avatar_url.replace(/^.*[\\/]/, '')}` : '/api/avatar/default'} sx={{width:32,height:32}} />
           <span>{oppPlayer?.name || oppPlayer?.login}</span>
         </Box>
         <Typography variant="subtitle2" sx={{mb:0.5}}>Варбанда:</Typography>

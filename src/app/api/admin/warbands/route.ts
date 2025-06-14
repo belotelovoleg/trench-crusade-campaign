@@ -8,11 +8,10 @@ export async function GET() {
   if (!auth?.value) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const user = await prisma.players.findUnique({ where: { login: auth.value } });
   if (!user || !user.is_admin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-
   const warbands = await prisma.warbands.findMany({
     include: {
       players: { select: { id: true, login: true, name: true, avatar_url: true } },
-      rosters: { select: { id: true, file_url: true, ducats: true, game_number: true } },
+      rosters: { select: { id: true, file_url: true, ducats: true, game_number: true, model_count: true, glory_points: true } },
     },
     orderBy: { id: 'desc' },
   });
