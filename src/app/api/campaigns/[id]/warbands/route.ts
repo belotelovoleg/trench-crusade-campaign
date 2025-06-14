@@ -54,13 +54,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         },
         rosters: {
           orderBy: { uploaded_at: 'desc' },
-          take: 1,
-          select: {
+          take: 1,          select: {
             id: true,
             ducats: true,
             model_count: true,
             glory_points: true,
             game_number: true,
+            file_url: true,
           },
         },
       },
@@ -102,14 +102,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           } else {
             draws++;
           }
-        });
-
-        return {
+        });        return {
           id: warband.id,
           name: warband.name,
           status: warband.status,
           catalogue_name: warband.catalogue_name,
           player: warband.players,
+          rosters: warband.rosters || [],
           latest_roster: warband.rosters[0] || null,
           total_vp,
           total_games,

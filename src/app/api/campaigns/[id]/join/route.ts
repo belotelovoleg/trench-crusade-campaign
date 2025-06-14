@@ -9,7 +9,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   try {
     const campaignId = parseInt(params.id);
     if (!campaignId) {
-      return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Недійсний ID кампанії' }, { status: 400 });
     }
 
     // Require authentication
@@ -22,12 +22,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     // Check if campaign exists and is active
     const campaign = await prisma.campaigns.findUnique({
       where: { id: campaignId },
-    });
-
-    if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+    });    if (!campaign) {
+      return NextResponse.json({ error: 'Кампанію не знайдено' }, { status: 404 });
     }    if (!campaign.is_active) {
-      return NextResponse.json({ error: 'Campaign is not active' }, { status: 400 });
+      return NextResponse.json({ error: 'Кампанія не активна' }, { status: 400 });
     }
 
     // Check if user is already in ANY campaign (only one campaign per player allowed)
@@ -42,14 +40,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             name: true,
           },
         },      },
-    });
-
-    if (existingParticipation) {
+    });      if (existingParticipation) {
       if (existingParticipation.campaign_id === campaignId) {
-        return NextResponse.json({ error: 'You are already a participant in this campaign' }, { status: 400 });
+        return NextResponse.json({ error: 'Ви вже є учасником цієї кампанії' }, { status: 400 });
       } else {
         return NextResponse.json({ 
-          error: `You are already participating in campaign "${existingParticipation.campaigns.name}". You can only participate in one campaign at a time.`,
+          error: `Ви вже берете участь у кампанії "${existingParticipation.campaigns.name}". Ви можете брати участь лише в одній кампанії одночасно.`,
           currentCampaign: existingParticipation.campaigns
         }, { status: 400 });
       }
@@ -62,15 +58,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         campaign_id: campaignId,
         is_admin: false,
       },
-    });
-
-    return NextResponse.json({ 
+    });    return NextResponse.json({ 
       success: true, 
-      message: 'Successfully joined the campaign',
+      message: 'Ви успішно приєдналися до кампанії',
       playerCampaign 
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
+    });  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Невідома помилка' }, { status: 500 });
   }
 }
 
@@ -79,7 +72,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
   try {
     const campaignId = parseInt(params.id);
     if (!campaignId) {
-      return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Недійсний ID кампанії' }, { status: 400 });
     }
 
     // Require authentication
@@ -97,10 +90,8 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
           campaign_id: campaignId,
         },
       },
-    });
-
-    if (!playerCampaign) {
-      return NextResponse.json({ error: 'You are not a participant in this campaign' }, { status: 400 });
+    });    if (!playerCampaign) {
+      return NextResponse.json({ error: 'Ви не є учасником цієї кампанії' }, { status: 400 });
     }
 
     // Don't allow leaving if user has active warbands in the campaign
@@ -112,11 +103,9 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
           not: 'deleted',
         },
       },
-    });
-
-    if (activeWarbands > 0) {
+    });    if (activeWarbands > 0) {
       return NextResponse.json({ 
-        error: 'Cannot leave campaign while you have active warbands. Please delete or deactivate your warbands first.' 
+        error: 'Неможливо покинути кампанію, доки у вас є активні загони. Будь ласка, видаліть або деактивуйте свої загони спочатку.' 
       }, { status: 400 });
     }
 
@@ -128,13 +117,11 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
           campaign_id: campaignId,
         },
       },
-    });
-
-    return NextResponse.json({ 
+    });    return NextResponse.json({ 
       success: true, 
-      message: 'Successfully left the campaign' 
+      message: 'Ви успішно покинули кампанію' 
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Невідома помилка' }, { status: 500 });
   }
 }

@@ -1,17 +1,30 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import prisma from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
-export async function GET() {
-  const authResult = await requireAuth();
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
+export async function GET(request: Request) {
   try {
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('authToken')?.value;
+    
+    if (!authToken) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+    
+    // Verify and decode JWT token
+    const decoded = jwt.verify(authToken, JWT_SECRET) as any;
+    const userId = decoded.userId;
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+    
     const user = await prisma.players.findUnique({
-      where: { id: authResult.userId },
+      where: { id: userId },
       select: {
         id: true,
         login: true,
@@ -35,110 +48,91 @@ export async function GET() {
   }
 }
 
-export async function PATCH(request: NextRequest) {
-  const authResult = await requireAuth();
-  if (authResult instanceof NextResponse) {
-    return authResult;
-  }
-
+export async function PATCH(request: Request) {
   try {
-    const contentType = request.headers.get('content-type') || '';
+    const cookieStore = await cookies();
+    const authToken = cookieStore.get('authToken')?.value;
     
-    // Handle multipart form data (avatar upload)
-    if (contentType.includes('multipart/form-data')) {
+    if (!authToken) {
+      return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
+    }
+    
+    // Verify and decode JWT token
+    const decoded = jwt.verify(authToken, JWT_SECRET) as any;
+    const userId = decoded.userId;
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
+    
+    const user = await prisma.players.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: 'Користувача не знайдено' }, { status: 401 });
+    }
+
+    // Якщо multipart/form-data (є файл)
+    if (request.headers.get('content-type')?.includes('multipart/form-data')) {
       const formData = await request.formData();
-      const avatarFile = formData.get('avatar') as File;
-      
-      if (!avatarFile) {
-        return NextResponse.json({ error: 'No avatar file provided' }, { status: 400 });
-      }
-      
-      // Process avatar file
-      const arrayBuffer = await avatarFile.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const avatarBase64 = `data:${avatarFile.type};base64,${buffer.toString('base64')}`;
-      
-      // Generate a unique filename
-      const timestamp = Date.now();
-      const filename = `avatar_${authResult.userId}_${timestamp}`;
-      const avatar_url = filename;
-      
-      // Update user with new avatar
-      await prisma.players.update({
-        where: { id: authResult.userId },
-        data: { 
-          avatar: avatarBase64,
-          avatar_url: avatar_url
-        },
-      });
-      
-      return NextResponse.json({ success: true, avatar_url });
-    }
-    
-    // Handle JSON data
-    if (contentType.includes('application/json')) {
-      const data = await request.json();
-      const updateData: any = {};
-      
-      // Update email if provided
-      if (data.email) {
-        // Check if email is already in use by another user
-        const existingUser = await prisma.players.findFirst({
-          where: {
-            email: data.email,
-            id: { not: authResult.userId }
-          }
-        });
-        
-        if (existingUser) {
-          return NextResponse.json({ error: 'Email already in use' }, { status: 400 });
-        }
-        
-        updateData.email = data.email;
-      }
-      
-      // Update password if provided
-      if (data.password && data.newPassword) {
-        // Get current password hash
-        const user = await prisma.players.findUnique({
-          where: { id: authResult.userId },
-          select: { password_hash: true }
-        });
-        
-        if (!user) {
-          return NextResponse.json({ error: 'User not found' }, { status: 404 });
-        }
-        
-        // Verify current password
-        const isMatch = await bcrypt.compare(data.password, user.password_hash);
-        if (!isMatch) {
-          return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
-        }
-        
-        // Hash new password
-        const newPasswordHash = await bcrypt.hash(data.newPassword, 10);
-        updateData.password_hash = newPasswordHash;
-      }
-      
-      // Update notes if provided
-      if (data.notes !== undefined) {
-        updateData.notes = data.notes;
-      }
-      
-      // Update user
-      if (Object.keys(updateData).length > 0) {
+      const file = formData.get('avatar');
+      if (file && typeof file === 'object' && 'arrayBuffer' in file) {
+        // Read file as base64
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const fileName = `user_${user!.id}_${Date.now()}.${ext}`;
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const base64 = `data:image/${ext === 'jpg' ? 'jpeg' : ext};base64,${buffer.toString('base64')}`;
         await prisma.players.update({
-          where: { id: authResult.userId },
-          data: updateData
+          where: { id: user.id },
+          data: {
+            avatar: base64,
+            avatar_url: fileName,
+            udt: new Date(),
+          },
         });
+        return NextResponse.json({ success: true, avatar_url: fileName });
       }
-      
-      return NextResponse.json({ success: true });
+      return NextResponse.json({ error: 'Файл не знайдено' }, { status: 400 });
     }
-    
-    return NextResponse.json({ error: 'Unsupported content type' }, { status: 400 });
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    return NextResponse.json({ error: 'Failed to update profile' }, { status: 500 });
+
+    // Якщо JSON (email, password, notes, avatar)
+    const { email, password, newPassword, notes, avatar } = await request.json();
+    const updateData: any = {};
+    if (email && email !== user.email) {
+      const exists = await prisma.players.findUnique({ where: { email } });
+      if (exists && exists.id !== user.id) {
+        return NextResponse.json({ error: 'Email вже використовується' }, { status: 400 });
+      }
+      updateData.email = email;
+    }
+    if (typeof notes === 'string' && notes !== user.notes) {
+      updateData.notes = notes;
+    }
+    if (typeof avatar === 'string' && avatar.length > 100) {
+      // Accept base64 avatar from cropper
+      // Try to detect extension for avatar_url
+      let ext = 'jpg';
+      const match = avatar.match(/^data:image\/(\w+);base64,/);
+      if (match) ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+      const fileName = `user_${user!.id}_${Date.now()}.${ext}`;
+      updateData.avatar = avatar;
+      updateData.avatar_url = fileName;
+    }
+    if (newPassword) {
+      if (!password) {
+        return NextResponse.json({ error: 'Введіть старий пароль' }, { status: 400 });
+      }
+      const isMatch = await bcrypt.compare(password, user.password_hash);
+      if (!isMatch) {
+        return NextResponse.json({ error: 'Старий пароль невірний' }, { status: 400 });
+      }
+      updateData.password_hash = await bcrypt.hash(newPassword, 10);
+    }
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'Немає змін для збереження' }, { status: 400 });
+    }
+    updateData.udt = new Date();
+    await prisma.players.update({ where: { id: user.id }, data: updateData });
+    return NextResponse.json({ success: true, avatar_url: updateData.avatar_url });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message || 'Помилка сервера' }, { status: 500 });
   }
 }

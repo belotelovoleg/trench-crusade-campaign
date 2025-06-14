@@ -22,28 +22,35 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         campaign_id: campaignId,
         player_id: authResult.userId
       }
-    });
-
-    if (!userCampaign) {
+    });    if (!userCampaign) {
       return NextResponse.json({ error: 'Not authorized for this campaign' }, { status: 403 });
-    }// Get players who have warbands in this campaign
-    const players = await prisma.players.findMany({
+    }
+      // Get players who have warbands in this campaign
+    const playersData = await prisma.players.findMany({
       where: {
         warbands: {
           some: {
             campaign_id: campaignId
           }
         }
-      },
-      select: {
+      },      select: {
         id: true,
         name: true,
         login: true,
         avatar_url: true,
         notes: true,
+        is_active: true, // Include active status from players table        is_super_admin: true, // Include super admin status
         idt: true, // Include registration date
         udt: true, // Include updated date
         ldt: true, // Include last login date
+        players_campaigns: {
+          where: {
+            campaign_id: campaignId
+          },
+          select: {
+            is_admin: true
+          }
+        },
         warbands: {
           select: {
             id: true,
@@ -68,7 +75,17 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           orderBy: { id: 'asc' },
         },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { name: 'asc' },    });
+    
+    // Transform the data to include campaign-specific admin status
+    const players = playersData.map(player => {
+      const campaignAdmin = player.players_campaigns[0]?.is_admin || false;
+      // Remove the players_campaigns array and add is_admin field
+      const { players_campaigns, ...rest } = player;
+      return {
+        ...rest,
+        is_admin: campaignAdmin, // This is the campaign-specific admin status
+      };
     });
     
     return NextResponse.json({ players });
@@ -141,5 +158,176 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   } catch (error) {
     console.error('Error updating player:', error);
     return NextResponse.json({ error: 'Failed to update player' }, { status: 500 });
+  }
+}
+
+// POST /api/campaigns/[id]/players - Used for password changes
+export async function POST(req: Request, { params }: { params: { id: string } }) {
+  const authResult = await requireAuth();
+  if (authResult instanceof NextResponse) {
+    return authResult;
+  }
+
+  try {
+    const campaignId = parseInt(params.id);
+    if (isNaN(campaignId)) {
+      return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const { id, password } = body;
+
+    if (!id || !password) {
+      return NextResponse.json({ error: 'Player ID and password are required' }, { status: 400 });
+    }
+
+    // Verify the requesting user has admin access to this campaign
+    const userCampaign = await prisma.players_campaigns.findFirst({
+      where: {
+        campaign_id: campaignId,
+        player_id: authResult.userId,
+      },
+    });
+
+    if (!userCampaign || !userCampaign.is_admin) {
+      return NextResponse.json({ error: 'Admin privileges required for this action' }, { status: 403 });
+    }    // Update the password
+    const bcrypt = require('bcryptjs');
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const updatedPlayer = await prisma.players.update({
+      where: { id },
+      data: { 
+        password_hash: hashedPassword,
+        udt: new Date() // Update the update timestamp
+      },
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      player: {
+        id: updatedPlayer.id,
+        login: updatedPlayer.login,
+        name: updatedPlayer.name,
+        email: updatedPlayer.email,
+        avatar_url: updatedPlayer.avatar_url,
+        notes: updatedPlayer.notes,
+        is_active: updatedPlayer.is_active,
+        is_super_admin: updatedPlayer.is_super_admin,
+        idt: updatedPlayer.idt,
+        udt: updatedPlayer.udt,
+        ldt: updatedPlayer.ldt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating player password:', error);
+    return NextResponse.json({ error: 'Failed to update player password' }, { status: 500 });
+  }
+}
+
+// DELETE /api/campaigns/[id]/players
+export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+  const authResult = await requireAuth();
+  if (authResult instanceof NextResponse) {
+    return authResult;
+  }
+
+  try {
+    const campaignId = parseInt(params.id);
+    if (isNaN(campaignId)) {
+      return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
+    }
+
+    const body = await req.json();
+    const { id } = body; // Get player ID to remove
+
+    if (!id) {
+      return NextResponse.json({ error: 'Player ID is required' }, { status: 400 });
+    }
+
+    // Verify the requesting user has admin access to this campaign
+    const userCampaign = await prisma.players_campaigns.findFirst({
+      where: {
+        campaign_id: campaignId,
+        player_id: authResult.userId,
+      },
+    });
+
+    if (!userCampaign || !userCampaign.is_admin) {
+      return NextResponse.json({ error: 'Admin privileges required for this action' }, { status: 403 });
+    }
+
+    // First, get all the warbands of this player in this campaign
+    const playerWarbands = await prisma.warbands.findMany({
+      where: {
+        campaign_id: campaignId,
+        player_id: id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const warbandIds = playerWarbands.map(wb => wb.id);    // Start a transaction to ensure all related data is deleted properly
+    await prisma.$transaction(async (tx) => {
+      // 1. Delete all rosters for these warbands
+      if (warbandIds.length > 0) {
+        await tx.rosters.deleteMany({
+          where: {
+            warband_id: {
+              in: warbandIds,
+            },
+          },
+        });
+
+        // 2. Delete all stories for these warbands
+        await tx.stories.deleteMany({
+          where: {
+            warband_id: {
+              in: warbandIds,
+            },
+          },
+        });
+
+        // 3. Handle games - update their status to cancelled if they involve the player's warbands
+        await tx.games.updateMany({
+          where: {
+            OR: [
+              { warband_1_id: { in: warbandIds } },
+              { warband_2_id: { in: warbandIds } },
+            ],
+            status: {
+              in: ['planned', 'active']
+            }
+          },
+          data: {
+            status: 'cancelled',
+          },
+        });
+
+        // 4. Delete the warbands themselves
+        await tx.warbands.deleteMany({
+          where: {
+            id: {
+              in: warbandIds,
+            },
+          },
+        });
+      }
+
+      // 4. Finally, remove the player from the campaign
+      await tx.players_campaigns.deleteMany({
+        where: {
+          campaign_id: campaignId,
+          player_id: id,
+        },
+      });
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error removing player from campaign:', error);
+    return NextResponse.json({ error: 'Failed to remove player from campaign' }, { status: 500 });
   }
 }

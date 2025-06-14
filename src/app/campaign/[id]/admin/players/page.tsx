@@ -234,11 +234,10 @@ export default function AdminPlayers() {
                       </div>
                     </Box>
                   </TableCell>
-                  <TableCell>{p.email}</TableCell>
-                  <TableCell>{p.is_admin ? "Так" : "Ні"}</TableCell>
+                  <TableCell>{p.email}</TableCell>                  <TableCell>{p.is_admin ? "Так" : "Ні"}</TableCell>
                   <TableCell>
                     <Switch
-                      checked={p.is_active}
+                      checked={p.is_active} 
                       onChange={() => handleActiveToggle(p)}
                       disabled={saving}
                     />
