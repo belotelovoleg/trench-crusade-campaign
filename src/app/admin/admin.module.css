@@ -1,9 +1,10 @@
 .adminContainer {
-  min-height: 100vh;
+  min-height: calc(100vh - var(--navbar-height));
   display: flex;
   align-items: center;
   justify-content: center;
   background: url('/bg/bg02.jpg') center/cover no-repeat fixed, linear-gradient(120deg, #232526 0%, #414345 100%);
+  padding-top: 20px;
 }
 
 .adminCenterBox {

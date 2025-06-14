@@ -122,11 +122,14 @@ export default function RegisterPage() {
               error={!!errors.email}
               helperText={errors.email}
               className={styles.input}
-            />
-            <Box mt={2} textAlign="center">
+            />            <Box mt={2} textAlign="center">
               <Button type="submit" variant="contained" color="primary" disabled={status === 'loading'}>
                 {status === 'loading' ? <CircularProgress size={24} color="inherit" /> : 'Зареєструватися'}
               </Button>
+            </Box>            <Box mt={2} textAlign="center">
+              <Typography variant="body2" sx={{ color: '#232526' }}>
+                Вже маєте акаунт? <a href="/login" style={{ color: '#1976d2', textDecoration: 'none', fontWeight: '500' }}>Увійти</a>
+              </Typography>
             </Box>
           </form>
         )}

@@ -79,12 +79,14 @@ export default function LoginPage() {
         </button>
         {status === 'success' && (
           <p className={`${styles.status} ${styles.success}`}>Вхід успішний!</p>
-        )}
-        {status && status !== 'success' && (
+        )}        {status && status !== 'success' && (
           <p className={`${styles.status} ${styles.error}`}>
             {status === 'error' ? 'Помилка входу.' : status === 'loading' ? 'Зачекайте...' : status}
           </p>
         )}
+        <div className={styles.linkContainer}>
+          <p>Ще не маєте акаунта? <a href="/register" className={styles.link}>Зареєструватися</a></p>
+        </div>
       </form>
     </div>
   );

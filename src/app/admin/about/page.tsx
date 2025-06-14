@@ -88,10 +88,9 @@ export default function AdminAboutPage() {
         .run();
     }
   }, [editor]);
-
   if (loading || !editor) return (
     <div className={adminStyles.adminContainer}>
-      <div style={{ minHeight: '100vh', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: 'calc(100vh - var(--navbar-height))', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </div>
     </div>

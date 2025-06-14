@@ -45,10 +45,9 @@ export default function Home() {
     const text = about.replace(/<[^>]+>/g, '').replace(/\s+/g, '');
     return !text;
   }, [about]);
-
   if (loading || aboutLoading) {
     return (
-      <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - var(--navbar-height))' }}>
         <CircularProgress />
       </main>
     );
@@ -58,11 +57,26 @@ export default function Home() {
     <div className={styles.mainPageRoot}>
       <div className={styles.mainPageTitle}>Ласкаво просимо до Trench Crusade</div>
       <div className={styles.mainPageBlocks}>
-        <div className={styles.mainPageAboutBlock}>
-          {!isAboutEmpty ? (
-            <div dangerouslySetInnerHTML={{ __html: about }} />
+        <div className={styles.mainPageAboutBlock}>          {!isAboutEmpty ? (
+            <div 
+              dangerouslySetInnerHTML={{ __html: about }} 
+              className={styles.aboutContent}
+            />
           ) : (
-            <Typography variant="h6" align="center" sx={{ color: 'primary.main', fontWeight: 600, mt: 4, mb: 4, textShadow: '0 2px 12px #bbb8, 0 0 2px #fff8' }}>
+            <Typography 
+              variant="h6" 
+              align="center" 
+              sx={{ 
+                color: 'primary.main', 
+                fontWeight: 600, 
+                mt: { xs: 2, md: 4 }, 
+                mb: { xs: 2, md: 4 }, 
+                px: { xs: 1, md: 2 },
+                fontSize: { xs: '1rem', sm: '1.1rem', md: '1.25rem' },
+                lineHeight: 1.5,
+                textShadow: '0 2px 12px #bbb8, 0 0 2px #fff8' 
+              }}
+            >
               Вступна історія цієї кампанії ще пишеться у багнюці окопів...<br/>
               Сторінки хронік чекають на перші героїчні вчинки!
             </Typography>
@@ -71,14 +85,23 @@ export default function Home() {
         <div className={styles.mainPageButtonBlock}>
           {user ? (
             <>
-              <Typography variant="h6" align="center">{greeting} {user.name || 'друже'}!</Typography>
-              {user.is_admin && (
+              <Typography 
+                variant="h6" 
+                align="center" 
+                sx={{ 
+                  mb: 2, 
+                  fontWeight: 600,
+                  fontSize: { xs: '1.1rem', sm: '1.25rem' }
+                }}
+              >
+                {greeting} {user.name || 'друже'}!
+              </Typography>              {user.is_admin && (
                 <Button
                   variant="contained"
                   color="secondary"
                   fullWidth
                   onClick={() => location.href = '/admin'}
-                  sx={{ mb: 2 }}
+                  sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
                 >
                   Перейти до адмін-частини
                 </Button>
@@ -88,14 +111,25 @@ export default function Home() {
                 color="primary"
                 fullWidth
                 onClick={() => location.href = '/profile'}
-                sx={{ mb: 2 }}
+                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Редагувати профіль
               </Button>
-              {/* Перелік варбанд користувача */}
-              {user && Array.isArray(user.warbands) && user.warbands.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Ваші варбанди:</Typography>
+              {/* Перелік варбанд користувача */}              {user && Array.isArray(user.warbands) && user.warbands.length > 0 && (
+                <div style={{ marginBottom: 16, width: '100%' }}>
+                  <Typography 
+                    variant="subtitle1" 
+                    sx={{ 
+                      fontWeight: 600, 
+                      mb: 1.5, 
+                      fontSize: { xs: '1rem', sm: '1.1rem' },
+                      textAlign: 'center',
+                      borderBottom: '1px solid #e0e0e0',
+                      paddingBottom: '8px'
+                    }}
+                  >
+                    Ваші варбанди:
+                  </Typography>
                   {user.warbands.filter((w: any) => w.status !== 'deleted').map((w: any, idx: number) => {
                     let statusIcon: React.ReactNode = null;
                     let statusColor = 'action';
@@ -117,23 +151,51 @@ export default function Home() {
                       statusColor = 'text.disabled';
                       statusTitle = 'Видалена';
                     }
-                    return (
-                      <div key={w.name + idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, border: '1px solid #e0e0e0', borderRadius: 8, padding: '8px 12px', background: '#fafbfc' }}>
-                        <Tooltip title={statusTitle} arrow placement="top">
-                          <span style={{ fontWeight: 500, cursor: 'help' }}>{w.name}</span>
-                        </Tooltip>
-                        <Tooltip title={statusTitle} arrow placement="top">
-                          <span style={{fontSize: 15, color: '#666', display: 'flex', alignItems: 'center'}}>
-                            <span style={{marginRight:4, display:'flex',alignItems:'center'}}>{statusIcon}</span>
-                          </span>
-                        </Tooltip>
+                    return (                      <div key={w.name + idx} style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'flex-start', 
+                        marginBottom: 12, 
+                        border: '1px solid #e0e0e0', 
+                        borderRadius: 8, 
+                        padding: '12px', 
+                        background: '#fafbfc',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                      }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          width: '100%',
+                          marginBottom: 8
+                        }}>
+                          <Tooltip title={statusTitle} arrow placement="top">
+                            <span style={{ fontWeight: 600, cursor: 'help', fontSize: '1.05rem' }}>{w.name}</span>
+                          </Tooltip>
+                          <Tooltip title={statusTitle} arrow placement="top">
+                            <span style={{fontSize: 18, color: '#666', display: 'flex', alignItems: 'center', marginLeft: 8}}>
+                              {statusIcon}
+                            </span>
+                          </Tooltip>
+                        </div>
+                        
                         {w.status === 'needs_update' ? (
-                          // Замість кнопки "До бою!" показуємо кнопку "Оновити ростер"
                           <Button
                             variant="contained"
                             color="warning"
                             size="small"
-                            sx={{ ml: 2, fontWeight: 700, letterSpacing: 0.5, boxShadow: '0 1px 4px #4f010122', px: 1.5, py: 0.4, fontSize: 13, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}
+                            sx={{ 
+                              fontWeight: 700, 
+                              letterSpacing: 0.5, 
+                              boxShadow: '0 1px 4px #4f010122', 
+                              px: 1.5, 
+                              py: 0.4, 
+                              fontSize: 13, 
+                              textTransform: 'uppercase', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 1,
+                              width: '100%'
+                            }}
                             component={Link}
                             href={`/warband-apply?warband_id=${w.id}&warband_name=${encodeURIComponent(w.name)}`}
                           >
@@ -144,7 +206,19 @@ export default function Home() {
                             variant="contained"
                             color="secondary"
                             size="small"
-                            sx={{ ml: 2, fontWeight: 700, letterSpacing: 0.5, boxShadow: '0 1px 4px #4f010122', px: 1.5, py: 0.4, fontSize: 13, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 1 }}
+                            sx={{ 
+                              fontWeight: 700, 
+                              letterSpacing: 0.5, 
+                              boxShadow: '0 1px 4px #4f010122', 
+                              px: 1.5, 
+                              py: 0.4, 
+                              fontSize: 13, 
+                              textTransform: 'uppercase', 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 1,
+                              width: '100%'
+                            }}
                             component={Link}
                             href={`/battle?warband_id=${w.id}`}
                             disabled={w.status === 'checking' || w.status === 'needs_update'}
@@ -168,14 +242,13 @@ export default function Home() {
                   })}
                 </div>
               )}
-              {/* Кнопка таблиці результатів */}
-              <Button
+              {/* Кнопка таблиці результатів */}              <Button
                 variant="outlined"
                 color="primary"
                 fullWidth
                 component={Link}
                 href="/players"
-                sx={{ mb: 2 }}
+                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Переглянути гравців кампанії
               </Button>
@@ -185,7 +258,7 @@ export default function Home() {
                 fullWidth
                 component={Link}
                 href="/table"
-                sx={{ mb: 2 }}
+                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Таблиця результатів
               </Button>
@@ -197,21 +270,38 @@ export default function Home() {
                   fullWidth
                   component={Link}
                   href="/warband-apply"
-                  sx={{ mt: 2 }}
+                  sx={{ mt: { xs: 1, sm: 2 }, mb: { xs: 1.5, sm: 2 }, py: { xs: 1, sm: 1.2 } }}
                 >
                   Подати ростер на участь у кампанії
                 </Button>
               )}
-              <Button variant="contained" color="secondary" fullWidth onClick={handleLogout}>
+              <Button 
+                variant="contained" 
+                color="secondary" 
+                fullWidth 
+                onClick={handleLogout}
+                sx={{ py: { xs: 1, sm: 1.2 } }}
+              >
                 Вийти
               </Button>
             </>
-          ) : (
-            <>
-              <Button variant="contained" color="primary" fullWidth onClick={() => location.href = '/login'}>
+          ) : (            <>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                fullWidth 
+                onClick={() => location.href = '/login'}
+                sx={{ mb: { xs: 1.5, sm: 2 }, py: { xs: 1.2, sm: 1.5 }, fontSize: { xs: '1rem', sm: '1.1rem' } }}
+              >
                 Увійти
               </Button>
-              <Button variant="outlined" color="secondary" fullWidth onClick={() => location.href = '/register'}>
+              <Button 
+                variant="outlined" 
+                color="secondary" 
+                fullWidth 
+                onClick={() => location.href = '/register'}
+                sx={{ py: { xs: 1.2, sm: 1.5 }, fontSize: { xs: '1rem', sm: '1.1rem' } }}
+              >
                 Зареєструватися
               </Button>
             </>

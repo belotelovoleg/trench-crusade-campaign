@@ -185,10 +185,9 @@ export default function AdminPlayers() {
       setOrder(field === 'idt' ? 'desc' : 'asc'); // idt за замовчуванням desc
     }
   }
-
   if (loading) return (
     <div className={adminStyles.adminContainer}>
-      <div style={{ minHeight: '100vh', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ minHeight: 'calc(100vh - var(--navbar-height))', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </div>
     </div>
