@@ -9,7 +9,7 @@ import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import TextAlign from '@tiptap/extension-text-align';
-import adminStyles from '../../../admin.module.css';
+import adminStyles from '../../admin.module.css';
 
 export const dynamic = "force-dynamic";
 
@@ -38,12 +38,11 @@ function WarbandStoriesPageInner() {
     ],
     content: '',
   });
-
   // Завантаження історій та ігор
   useEffect(() => {
     if (!warbandId || !campaignId) return;
     setLoading(true);
-    fetch(`/api/campaigns/${campaignId}/warbands/${warbandId}/stories`)
+    fetch(`/api/campaigns/${campaignId}/admin/warbands/${warbandId}/stories`)
       .then(res => res.json())
       .then(data => {
         setStories(data.stories || []);
@@ -67,8 +66,7 @@ function WarbandStoriesPageInner() {
     if (!editor || !warbandId || !campaignId) return;
     setSaving(true);
     setError("");
-    setSuccess(false);
-    const res = await fetch(`/api/campaigns/${campaignId}/warbands/${warbandId}/stories`, {
+    setSuccess(false);    const res = await fetch(`/api/campaigns/${campaignId}/admin/warbands/${warbandId}/stories`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ number: selectedNumber, html: editor.getHTML() }),

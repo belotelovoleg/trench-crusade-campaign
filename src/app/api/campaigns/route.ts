@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Campaign name is required' }, { status: 400 });
-    }    // Create the campaign
+    }
+
     const campaign = await prisma.campaigns.create({
       data: {
         name: name.trim(),
