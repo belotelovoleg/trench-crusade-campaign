@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { cookies } from 'next/headers';
 
 const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -46,9 +49,7 @@ export async function POST(req: Request) {
     }
 
     // 🔐 Хешування паролю
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // ✅ Створення гравця
+    const hashedPassword = await bcrypt.hash(password, 10);    // ✅ Створення гравця
     const player = await prisma.players.create({
       data: {
         login,
@@ -59,6 +60,27 @@ export async function POST(req: Request) {
       },
     });
 
+    // 🍪 Auto-login: Create JWT token and set cookie after successful registration
+    const token = jwt.sign(
+      { 
+        userId: player.id, 
+        login: player.login,
+        name: player.name,
+        email: player.email,
+        is_super_admin: player.is_super_admin 
+      },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    const cookieStore = await cookies();
+    cookieStore.set('authToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
     return NextResponse.json({
       success: true,
       player: {
@@ -66,7 +88,7 @@ export async function POST(req: Request) {
         login: player.login,
         email: player.email,
       },
-    });  } catch (error: any) {
+    });} catch (error: any) {
     console.error('Registration error:', error);
     
     // Handle specific database errors in a user-friendly way

@@ -51,40 +51,54 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
     themeColorMeta.setAttribute('content', '#8B4513');
   }, []);
-
   // Breadcrumbs only for /app/* pages
   function Breadcrumbs() {
     const [mobileOpen, setMobileOpen] = useState(false);
     const pathname = usePathname();
     let crumbs = [
-      { label: 'Головна', href: '/' }
+      { label: 'Кампанії', href: '/' }
     ];
-    if (pathname && pathname.startsWith('/admin')) {
-      crumbs.push({ label: 'Адмін-панель', href: '/admin' });
-      if (pathname !== '/admin') {
-        // Визначаємо підсторінку
-        let sub = '';
-        if (pathname === '/admin/warbands') sub = 'Варбанди';
-        else if (pathname === '/admin/players') sub = 'Гравці';
-        else if (pathname === '/admin/about') sub = 'Опис кампанії';
-        else if (pathname === '/admin/games') sub = 'Баталії';
-        else if (pathname === '/admin/warbands/stories') sub = 'Історії варбанд';
-        else sub = pathname.replace('/admin/', '');
-        crumbs.push({ label: sub, href: pathname });
+    
+    if (pathname && pathname !== '/') {
+      const segments = pathname.split('/').filter(Boolean);
+      
+      // Handle campaign-specific routes
+      if (segments[0] === 'campaign' && segments[1]) {
+        crumbs.push({ label: 'Кампанія', href: `/campaign/${segments[1]}` });
+        
+        // Add specific page labels
+        if (segments[2] === 'admin') {
+          crumbs.push({ label: 'Адмін-панель', href: `/campaign/${segments[1]}/admin` });
+          if (segments[3] === 'about') crumbs.push({ label: 'Опис кампанії', href: pathname });
+          else if (segments[3] === 'players') crumbs.push({ label: 'Гравці', href: pathname });
+          else if (segments[3] === 'warbands') {
+            crumbs.push({ label: 'Варбанди', href: `/campaign/${segments[1]}/admin/warbands` });
+            if (segments[4] === 'stories') crumbs.push({ label: 'Історії', href: pathname });
+          }
+          else if (segments[3] === 'games') crumbs.push({ label: 'Баталії', href: pathname });
+        } else if (segments[2] === 'warband-apply') {
+          crumbs.push({ label: 'Подати ростер', href: pathname });
+        } else if (segments[2] === 'table') {
+          crumbs.push({ label: 'Таблиця результатів', href: pathname });
+        } else if (segments[2] === 'battle') {
+          crumbs.push({ label: 'Битва', href: pathname });
+        } else if (segments[2] === 'players') {
+          crumbs.push({ label: 'Гравці', href: pathname });
+        }
+      } 
+      // Handle global routes
+      else if (pathname === '/create-campaign') {
+        crumbs.push({ label: 'Створити кампанію', href: pathname });
+      } else if (pathname === '/profile') {
+        crumbs.push({ label: 'Профіль', href: pathname });
+      } else if (pathname === '/register') {
+        crumbs.push({ label: 'Реєстрація', href: pathname });
+      } else if (pathname === '/login') {
+        crumbs.push({ label: 'Вхід', href: pathname });
+      } else {
+        // Fallback for other routes
+        crumbs.push({ label: pathname.replace(/^\//, ''), href: pathname });
       }
-    } else if (pathname && pathname !== '/') {
-      let label = '';
-      if (pathname === '/warband-apply') label = 'Подати ростер';
-      else if (pathname === '/profile') label = 'Профіль';
-      else if (pathname === '/register') label = 'Реєстрація';
-      else if (pathname === '/table') label = 'Таблиця результатів';
-      else if (pathname === '/battle') label = 'Битва';
-      else if (pathname === '/login') label = 'Вхід';
-      else if (pathname === '/players') label = 'Гравці';
-      else if (pathname === '/battle/plan') label = 'Планування битви';
-      else if (pathname === '/battle/results') label = 'Результати битви';
-      else label = pathname.replace(/^\//, '');
-      crumbs.push({ label, href: pathname });
     }
     return (
       <nav className={breadcrumbsStyles.breadcrumbs}>

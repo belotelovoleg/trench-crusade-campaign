@@ -19,6 +19,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: url('/bg/bg01.jpg') center/cover no-repeat, linear-gradient(120deg, #232526 0%, #414345 100%);
   padding-top: var(--navbar-height);
+  padding-right: 0px !important;
 }
 
 * {

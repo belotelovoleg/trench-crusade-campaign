@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, ChangeEvent, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Button,
@@ -14,6 +15,7 @@ import styles from './register.module.css';
 export const dynamic = "force-dynamic";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [form, setForm] = useState({ login: '', password: '', name: '', email: '' });
   const [status, setStatus] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -44,10 +46,12 @@ export default function RegisterPage() {
       body: JSON.stringify(form),
     });
 
-    const result = await res.json();
-
-    if (result.success) {
+    const result = await res.json();    if (result.success) {
       setStatus('success');
+      // Auto-redirect to homepage after successful registration and auto-login
+      setTimeout(() => {
+        router.push('/');
+      }, 1500); // Short delay to show success message
     } else {
       setStatus('error');
       const errorMap: Record<string, string> = {};
