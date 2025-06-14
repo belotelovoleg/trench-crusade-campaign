@@ -68,7 +68,10 @@ return (
             {filteredPlayers.map(player => (
                 <Paper key={player.id} sx={{ mb: 3, p: 2, boxShadow: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : undefined} sx={{ width: 56, height: 56 }} />
+                        <Avatar 
+                          src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : '/api/avatar/default'} 
+                          sx={{ width: 56, height: 56 }} 
+                        />
                         <Box>
                             <Typography variant="h6">{player.name || player.login}</Typography>
                             <Button

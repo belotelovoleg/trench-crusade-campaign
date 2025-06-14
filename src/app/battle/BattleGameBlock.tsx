@@ -41,6 +41,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
 }) => {
   const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [editResultsDialogOpen, setEditResultsDialogOpen] = useState(false);
   const [confirmMode, setConfirmMode] = useState<'approve'|'reject'|null>(null);
 
   // Determine readiness state for UI
@@ -110,14 +111,18 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
             <>
               <Typography variant="subtitle1">Гра {selectedGame}</Typography>
               <Box sx={{display:'flex',gap:2,alignItems:'center',mb:1}}>
-                <Avatar src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? `/api/avatar/${currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url}` : undefined} />
+                <Avatar src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? 
+                  `/api/avatar/${currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url}` : 
+                  '/api/avatar/default'} />
                 <span>{currentGame.warbands_games_warband_1_idTowarbands.name}</span>
                 <span>({currentGame.warbands_games_warband_1_idTowarbands.players.name})</span>
                 <b>VP: {currentGame.vp_1}</b>
                 <b>GP: {currentGame.gp_1}</b>
               </Box>
               <Box sx={{display:'flex',gap:2,alignItems:'center'}}>
-                <Avatar src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? `/api/avatar/${currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url}` : undefined} />
+                <Avatar src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? 
+                  `/api/avatar/${currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url}` : 
+                  '/api/avatar/default'} />
                 <span>{currentGame.warbands_games_warband_2_idTowarbands.name}</span>
                 <span>({currentGame.warbands_games_warband_2_idTowarbands.players.name})</span>
                 <b>VP: {currentGame.vp_2}</b>
@@ -128,7 +133,18 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
             <>
               <Typography>Статус гри: {currentGame.status === 'planned' ? 'Запланована' : currentGame.status === 'active' ? 'Триває' : currentGame.status === 'cancelled' ? 'Скасована' : currentGame.status}</Typography>
               {opponentPlannedBlock}
-              {/* Кнопка скачування ростера супротивника */}
+              {/* Кнопка скачування ростера супротивника */}              {/* Status indicator for planned games */}
+              {currentGame.status === 'planned' && (
+                <Box sx={{mt:2, mb:1, display:'flex', alignItems:'center', gap:1}}>
+                  <Typography color={opponentIsReady ? "success.main" : "warning.main"}>
+                    {myIsReady 
+                      ? (opponentIsReady ? "Обидва гравці готові! Натисніть 'Почати гру'" : "Ви готові, очікуємо на опонента")
+                      : (opponentIsReady ? "Опонент готовий, підтвердіть свою готовність" : "Очікуємо підтвердження від обох гравців")}
+                  </Typography>
+                </Box>
+              )}
+                
+              {/* Start game button */}
               {currentGame.status === 'planned' && (
                 <Button
                   size="small"
@@ -139,7 +155,19 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                   disabled={readyLoading && lastReadyGameId === currentGame.id || myIsReady}
                 >
                   {readyLoading && lastReadyGameId === currentGame.id ? <CircularProgress size={18} sx={{mr:1}}/> : null}
-                  {myIsReady ? 'Очікуємо на опонента' : 'Почати гру'}
+                  {myIsReady ? 'Ви підтвердили готовність' : 'Підтвердити готовність'}
+                </Button>
+              )}
+              {/* Start active game button - only appears when both players are ready */}
+              {currentGame.status === 'planned' && myIsReady && opponentIsReady && (
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  sx={{mt:2, ml:2}}
+                  onClick={()=>handleStartGame(currentGame)}
+                >
+                  Почати активну гру
                 </Button>
               )}
               {/* Якщо гра стала активною */}
@@ -154,8 +182,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                 >
                   Завершити гру (ввести результати)
                 </Button>
-              )}
-              {/* Додаємо блок для pending_approval */}
+              )}              {/* Додаємо блок для pending_approval */}
               {currentGame.status === 'pending_approval' && (
                 <>
                   <Typography color="warning.main" sx={{mt:2}}>Очікується підтвердження результату обома гравцями</Typography>
@@ -163,42 +190,67 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                   {((isPlayer1 && !currentGame.player1_isApprovedResult) || (!isPlayer1 && !currentGame.player2_isApprovedResult)) && (
                     <Box sx={{display:'flex',gap:2,mt:2}}>
                       <Button variant="contained" color="success" onClick={() => setConfirmDialogOpen(true)}>
-                        Передивитись результат
+                        Подивитись результат
                       </Button>
                     </Box>
+                  )}
+                  {/* Якщо інший гравець вніс зміни і я ще не підтвердив */}
+                  {((isPlayer1 && !currentGame.player1_isApprovedResult && currentGame.player2_isApprovedResult) || 
+                    (!isPlayer1 && !currentGame.player2_isApprovedResult && currentGame.player1_isApprovedResult)) && (
+                    <Typography color="info.main" sx={{mt:1}}>
+                      Опонент вніс зміни до результату гри. Будь ласка, перегляньте та підтвердіть новий результат.
+                    </Typography>
                   )}
                   {/* Якщо я вже підтвердив */}
                   {((isPlayer1 && currentGame.player1_isApprovedResult) || (!isPlayer1 && currentGame.player2_isApprovedResult)) && (
                     <Typography color="text.secondary" sx={{mt:2}}>Ви підтвердили результат. Очікуємо на опонента.</Typography>
-                  )}
-                  {/* Діалог підтвердження/відхилення результату */}
+                  )}                  {/* Діалог підтвердження/відхилення результату */}
                   <GameResultsDialog
                     open={confirmDialogOpen}
                     onClose={() => setConfirmDialogOpen(false)}
                     game={currentGame}
-                    onResultsSaved={() => {
+                    onResultsSaved={(action) => {
                       setConfirmDialogOpen(false);
+                      if (action === 'edit') {
+                        // Якщо користувач натиснув "Змінити результат", відкриваємо діалог редагування
+                        setEditResultsDialogOpen(true);
+                      } else if (action === 'approve') {
+                        // Якщо користувач підтвердив результат
+                        if (typeof window !== 'undefined') window.location.reload();
+                      }
+                    }}
+                    readOnly={true}
+                    confirmMode="approve"
+                  />                  {/* Діалог редагування результату */}
+                  <GameResultsDialog
+                    open={editResultsDialogOpen}
+                    onClose={() => setEditResultsDialogOpen(false)}
+                    game={currentGame}
+                    onResultsSaved={(action) => {
+                      setEditResultsDialogOpen(false);
                       if (typeof window !== 'undefined') window.location.reload();
                     }}
-                    readOnly
                   />
                 </>
-              )}
-              <GameResultsDialog
+              )}              <GameResultsDialog
                 open={resultsDialogOpen}
                 onClose={() => setResultsDialogOpen(false)}
                 game={currentGame}
-                onResultsSaved={() => {
+                onResultsSaved={(action) => {
                   setResultsDialogOpen(false);
                   // Оновити дані після збереження результатів
                   if (typeof window !== 'undefined') window.location.reload();
                 }}
-              />
+              />              {/* Cancel game button */}
               {currentGame.status === 'planned' && (
-                <Button size="small" variant="outlined" color="error" sx={{mt:2}}
+                <Button 
+                  size="small" 
+                  variant="outlined" 
+                  color="error" 
+                  sx={{mt:2}}
                   onClick={() => handleCancelGame(currentGame)}
                 >
-                  Скасувати гру
+                  Скасувати пропозицію гри
                 </Button>
               )}
             </>

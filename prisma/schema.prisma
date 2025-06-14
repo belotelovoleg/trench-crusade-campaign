@@ -35,6 +35,8 @@ model games {
   player2_injuries                      Json?
   player1_skillAdvancements             Json?
   player2_skillAdvancements             Json?
+  player1_becomesElite                  Json?
+  player2_becomesElite                  Json?
   player1_explorationDice               Int?
   player2_explorationDice               Int?
   warbands_games_warband_1_idTowarbands warbands     @relation("games_warband_1_idTowarbands", fields: [warband_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "games_ibfk_1")

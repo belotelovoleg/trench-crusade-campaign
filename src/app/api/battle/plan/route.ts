@@ -21,7 +21,6 @@ export async function POST(req: Request) {
   // Перевіряємо, що warband_2 існує і активна
   const opponentWarband = await prisma.warbands.findFirst({ where: { id: warband_2_id, status: 'active' } });
   if (!opponentWarband) return NextResponse.json({ error: 'Opponent warband not found or not active' }, { status: 400 });
-
   // Перевіряємо, чи вже є запланована або активна гра для кожної варбанди
   const existingGame1 = await prisma.games.findFirst({
     where: {
@@ -38,6 +37,24 @@ export async function POST(req: Request) {
   if (existingGame1 || existingGame2) {
     return NextResponse.json({
       error: 'Одна з обраних варбанд вже має заплановану або активну битву. Завершіть поточну гру або скасуйте планування, перш ніж створювати нову.'
+    }, { status: 400 });
+  }
+
+  // Перевіряємо, чи вже є запланована гра для гравців
+  const existingPlayerGame = await prisma.games.findFirst({
+    where: {
+      OR: [
+        { player1_id: user.id, status: 'planned' },
+        { player2_id: user.id, status: 'planned' },
+        { player1_id: opponentWarband.player_id, status: 'planned' },
+        { player2_id: opponentWarband.player_id, status: 'planned' },
+      ],
+    },
+  });
+  
+  if (existingPlayerGame) {
+    return NextResponse.json({
+      error: 'Ви або ваш опонент вже маєте заплановану гру. Гравець може мати лише одну заплановану гру одночасно.'
     }, { status: 400 });
   }
 

@@ -26,14 +26,22 @@ export async function POST(req: Request) {
   if (errors.length > 0) {
     return NextResponse.json({ success: false, errors }, { status: 400 });
   }
-
   try {
     // 🚫 Перевірка на існуючого користувача
-    const existing = await prisma.players.findUnique({ where: { login } });
-    if (existing) {
+    const existingLogin = await prisma.players.findUnique({ where: { login } });
+    if (existingLogin) {
       return NextResponse.json({
         success: false,
         errors: [{ field: 'login', message: 'Користувач з таким логіном вже існує' }],
+      }, { status: 400 });
+    }
+    
+    // Перевірка на існуючий email
+    const existingEmail = await prisma.players.findUnique({ where: { email } });
+    if (existingEmail) {
+      return NextResponse.json({
+        success: false,
+        errors: [{ field: 'email', message: 'Користувач з такою email адресою вже існує' }],
       }, { status: 400 });
     }
 
@@ -58,11 +66,34 @@ export async function POST(req: Request) {
         login: player.login,
         email: player.email,
       },
-    });
-  } catch (error: any) {
+    });  } catch (error: any) {
+    console.error('Registration error:', error);
+    
+    // Handle specific database errors in a user-friendly way
+    if (error.code === 'P2002') {
+      // This is a Prisma unique constraint violation
+      const target = error.meta?.target?.[0] || 'field';
+      let fieldName = 'server';
+      let message = 'Помилка дублікату даних';
+      
+      if (target === 'login') {
+        fieldName = 'login';
+        message = 'Користувач з таким логіном вже існує';
+      } else if (target === 'email') {
+        fieldName = 'email';
+        message = 'Користувач з такою email адресою вже існує';
+      }
+      
+      return NextResponse.json({
+        success: false,
+        errors: [{ field: fieldName, message }],
+      }, { status: 400 });
+    }
+    
+    // Generic error handling
     return NextResponse.json({
       success: false,
-      errors: [{ field: 'server', message: 'Помилка на сервері: ' + error.message }],
+      errors: [{ field: 'server', message: 'Виникла помилка при реєстрації. Спробуйте ще раз.' }],
     }, { status: 500 });
   }
 }

@@ -72,7 +72,6 @@ export default function ProfilePage() {
   const onCropComplete = (_: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
-
   const handleCropSave = async () => {
     if (!rawImage || !croppedAreaPixels) return;
     const croppedBlob = await getCroppedImg(rawImage, croppedAreaPixels, 200);
@@ -83,80 +82,97 @@ export default function ProfilePage() {
     reader.readAsDataURL(croppedBlob);
     setShowCropper(false);
   };
-
-  const handleAvatarUpload = async () => {
-    if (!avatarFile) return;
+  
+  const handleSaveAll = async () => {
     setSaving(true);
     setError("");
     setSuccess("");
+    
     try {
-      const formData = new FormData();
-      formData.append('avatar', avatarFile);
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Помилка збереження аватара");
-      } else {
-        setSuccess("Аватар оновлено");
-        setAvatar(`/api/avatar/${data.avatar_url.replace(/^.*[\\/]/, '')}?t=${Date.now()}`);
-        setAvatarFile(null);
-        setPreviewUrl(null); // Скидаємо превʼю
+      let hasUpdates = false;
+      const updatePromises: Promise<boolean>[] = [];
+      
+      // Always check all potential changes regardless of current tab
+      
+      // 1. Handle avatar upload if there's a new avatar
+      if (avatarFile) {
+        const formData = new FormData();
+        formData.append('avatar', avatarFile);
+        const avatarPromise = fetch("/api/profile", {
+          method: "PATCH",
+          body: formData,
+        }).then(async (avatarRes) => {
+          const avatarData = await avatarRes.json();
+          if (!avatarRes.ok) {
+            throw new Error(avatarData.error || "Помилка збереження аватара");
+          }
+          
+          setAvatar(`/api/avatar/${avatarData.avatar_url.replace(/^.*[\\/]/, '')}?t=${Date.now()}`);
+          setAvatarFile(null);
+          setPreviewUrl(null);
+          return true;
+        });
+        
+        updatePromises.push(avatarPromise);
+        hasUpdates = true;
       }
-    } catch (e: any) {
-      setError(e.message || "Помилка збереження аватара");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError("");
-    setSuccess("");
-    try {
-      const body: any = { email };
-      if (newPassword && password) {
-        body.password = password;
-        body.newPassword = newPassword;
+      
+      // 2. Handle profile data updates (email and password)
+      const hasProfileChanges = email !== user?.email || (newPassword && password);
+      if (hasProfileChanges) {
+        const body: any = { email };
+        if (newPassword && password) {
+          body.password = password;
+          body.newPassword = newPassword;
+        }
+        
+        const profilePromise = fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }).then(async (profileRes) => {
+          if (!profileRes.ok) {
+            const err = await profileRes.json();
+            throw new Error(err.error || "Помилка збереження профілю");
+          }
+          
+          setPassword("");
+          setNewPassword("");
+          return true;
+        });
+        
+        updatePromises.push(profilePromise);
+        hasUpdates = true;
       }
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.error || "Помилка збереження");
-      } else {
-        setSuccess("Профіль оновлено");
-        setPassword("");
-        setNewPassword("");
+      
+      // 3. Handle notes changes - check regardless of current tab
+      const hasNotesChanges = notes !== user?.notes;
+      if (hasNotesChanges) {
+        const notesPromise = fetch("/api/profile", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes }),
+        }).then(async (notesRes) => {
+          if (!notesRes.ok) {
+            const err = await notesRes.json();
+            throw new Error(err.error || "Помилка збереження опису");
+          }
+          
+          // Update user object to reflect the new notes
+          setUser(prev => ({...prev, notes}));
+          return true;
+        });
+        
+        updatePromises.push(notesPromise);
+        hasUpdates = true;
       }
-    } catch (e: any) {
-      setError(e.message || "Помилка збереження");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveNotes = async () => {
-    setSaving(true);
-    setError("");
-    setSuccess("");
-    try {
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setError(err.error || "Помилка збереження");
+      
+      // Wait for all promises to resolve
+      if (updatePromises.length > 0) {
+        await Promise.all(updatePromises);
+        setSuccess("Зміни збережено успішно");
       } else {
-        setSuccess("Опис збережено");
+        setSuccess("Немає змін для збереження");
       }
     } catch (e: any) {
       setError(e.message || "Помилка збереження");
@@ -179,7 +195,12 @@ export default function ProfilePage() {
         </Tabs>
         {tab === 0 && (
           <Box className={styles.profileForm}>
-            <Avatar src={avatar ? (avatar.startsWith('/api/avatar/') ? avatar : `/api/avatar/${avatar.replace(/^.*[\\/]/, '')}`) : undefined} className={styles.profileAvatar}/>
+            <Avatar 
+              src={avatar ? 
+                (avatar.startsWith('/api/avatar/') ? avatar : `/api/avatar/${avatar.replace(/^.*[\\/]/, '')}`) : 
+                '/api/avatar/default'} 
+              className={styles.profileAvatar}
+            />
             <Button variant="outlined" component="label" disabled={saving}>
               Завантажити аватар
               <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
@@ -225,17 +246,12 @@ export default function ProfilePage() {
                   Скасувати
                 </Button>
               </DialogActions>
-            </Dialog>
-            {/* Кнопка "Зберегти аватар" зʼявляється, якщо є avatarFile і cropper закритий */}
-            {avatarFile && !showCropper && (
-              <>
-                {previewUrl && (
-                  <Avatar src={previewUrl} className={styles.profileAvatar} sx={{ mb: 1, border: '2px solid #388e3c' }} />
-                )}
-                <Button variant="contained" color="primary" fullWidth sx={{ mt: 1 }} onClick={handleAvatarUpload} disabled={saving}>
-                  Зберегти аватар
-                </Button>
-              </>
+            </Dialog>            {/* Показати превʼю нового аватара, якщо він був обрізаний */}
+            {avatarFile && !showCropper && previewUrl && (
+              <Box sx={{ mt: 1, mb: 2, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Typography variant="body2" sx={{ mb: 1 }}>Новий аватар (буде збережено після натискання "Зберегти зміни"):</Typography>
+                <Avatar src={previewUrl} className={styles.profileAvatar} sx={{ border: '2px solid #388e3c' }} />
+              </Box>
             )}
             <TextField
               label="Email"
@@ -259,13 +275,12 @@ export default function ProfilePage() {
               onChange={e => setNewPassword(e.target.value)}
               fullWidth
               sx={{mt:2}}
-            />
-            <Button
+            />            <Button
               variant="contained"
               color="primary"
               fullWidth
               sx={{mt:3}}
-              onClick={handleSave}
+              onClick={handleSaveAll}
               disabled={saving}
             >
               Зберегти зміни
@@ -285,9 +300,8 @@ export default function ProfilePage() {
               helperText="Вкажіть, коли і де ви можете зіграти гру цієї кампанії. Це поле бачать інші гравці."
               variant="outlined"
               sx={{mb:2}}
-            />
-            <Button variant="contained" color="primary" onClick={handleSaveNotes} disabled={saving}>
-              Зберегти опис
+            />            <Button variant="contained" color="primary" onClick={handleSaveAll} disabled={saving} fullWidth>
+              Зберегти зміни
             </Button>
           </Box>
         )}

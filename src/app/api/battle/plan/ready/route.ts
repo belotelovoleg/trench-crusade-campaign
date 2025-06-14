@@ -20,7 +20,6 @@ export async function PATCH(req: Request) {
   // Determine if user is player1 or player2
   const myWarband = await prisma.warbands.findFirst({ where: { player_id: user.id, id: { in: [game.warband_1_id, game.warband_2_id] } } });
   if (!myWarband) return NextResponse.json({ error: 'Not your game' }, { status: 403 });
-
   let update: any = {};
   if (myWarband.id === game.warband_1_id) {
     update.player1_isReady = true;
@@ -30,8 +29,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Not your game' }, { status: 403 });
   }
 
-  // If both ready, set status to 'active'
-  if ((myWarband.id === game.warband_1_id && game.player2_isReady) || (myWarband.id === game.warband_2_id && game.player1_isReady)) {
+  // If both players are ready (either already or with this update), set status to 'active'
+  const willBothBeReady = 
+    (update.player1_isReady && game.player2_isReady) || 
+    (update.player2_isReady && game.player1_isReady) ||
+    (game.player1_isReady && game.player2_isReady);
+    
+  if (willBothBeReady) {
     update.status = 'active';
   }
 

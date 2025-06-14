@@ -7,48 +7,57 @@ import PlanGameDialog from './PlanGameDialog';
 import FACTION_AVATARS from '../factionAvatars';
 import BattleGameBlock from './BattleGameBlock';
 
+type WarbandRoster = {
+  id: number;
+  file_url: string;
+  model_count?: number;
+  ducats?: number;
+  glory_points?: number;
+  game_number?: number;
+  [key: string]: any;
+};
+
 function BattlePageContent() {
   const searchParams = useSearchParams();
   const warbandId = searchParams?.get('warband_id');
   const warbandIdNum = Number(warbandId);
+  
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedGame, setSelectedGame] = useState(1);
   const [roster, setRoster] = useState<any>(null);
   const [rosterLoading, setRosterLoading] = useState(false);
   const [rosterError, setRosterError] = useState<string | null>(null);
+  const [rostersCache, setRostersCache] = useState<{[fileUrl: string]: any}>({});
+  const [openPlanGame, setOpenPlanGame] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [gameToCancel, setGameToCancel] = useState<any>(null);
+  const [readyLoading, setReadyLoading] = useState(false);
+  const [readyState, setReadyState] = useState<'none'|'waiting'|'active'>('none');
+  const [lastReadyGameId, setLastReadyGameId] = useState<number|null>(null);
+  const [approveLoading, setApproveLoading] = useState(false);
+  const [rejectLoading, setRejectLoading] = useState(false);
+  const [resultActionError, setResultActionError] = useState<string|null>(null);
 
   useEffect(() => {
     if (!warbandIdNum) return;
     fetch(`/api/battle?warband_id=${warbandIdNum}`)
       .then(res => res.json())
-      .then(setData)
+      .then(data => {
+        setData(data);
+        setSelectedGame(calculateNextGameNumber(data));
+      })
       .finally(() => setLoading(false));
   }, [warbandIdNum]);
 
-  // --- Додаємо типізацію для ростерів ---
-  type WarbandRoster = {
-    id: number;
-    file_url: string;
-    model_count?: number;
-    ducats?: number;
-    glory_points?: number;
-    game_number?: number;
-    [key: string]: any;
-  };
-
-  // --- Додаємо стани для кешу ростерів ---
-  const [rostersCache, setRostersCache] = useState<{[fileUrl: string]: any}>({});
-
-  // --- Додаємо useEffect для завантаження ростера ---
   useEffect(() => {
-    // Діагностика
     console.log('loadRoster:', { warbandIdNum, selectedGame });
     setRoster(null);
     setRosterError(null);
-    // Перевірка на валідність
+    
     if (!warbandIdNum || !selectedGame || isNaN(selectedGame)) return;
     setRosterLoading(true);
+    
     fetch(`/api/roster?warband_id=${warbandIdNum}&game_number=${selectedGame}`)
       .then(async res => {
         let json;
@@ -57,8 +66,8 @@ function BattlePageContent() {
         } catch {
           throw new Error('Invalid JSON');
         }
+        
         if (json && json.error) {
-          // Покращене повідомлення про помилку
           let msg = 'Не вдалося завантажити ростер';
           if (json.reason === 'db') msg = 'Ростер не знайдено в базі даних для цієї гри.';
           else if (json.reason === 'file') msg = 'Файл ростера відсутній на сервері.';
@@ -68,6 +77,7 @@ function BattlePageContent() {
           setRosterError(msg);
           throw new Error(msg);
         }
+        
         return json;
       })
       .then(setRoster)
@@ -78,9 +88,13 @@ function BattlePageContent() {
   }, [selectedGame, warbandIdNum]);
 
   const handleDownloadRoster = () => {
-    // Підтримка як file_url, так і прямого JSON-об'єкта
+    if (!data || !data.warband) {
+      return;
+    }
+    
+    const warband = data.warband;
+    
     if (roster && roster.file_url) {
-      // Якщо є file_url — просто відкриваємо його
       const link = document.createElement('a');
       link.href = roster.file_url;
       link.download = `roster_${warband.name}_${selectedGame}.json`;
@@ -88,7 +102,6 @@ function BattlePageContent() {
       link.click();
       document.body.removeChild(link);
     } else if (roster && roster.roster) {
-      // Якщо file_url немає, але є JSON — зберігаємо його як файл
       const blob = new Blob([JSON.stringify(roster, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -101,16 +114,11 @@ function BattlePageContent() {
     }
   };
 
-  // --- Додаємо стани для попапу планування гри ---
-  const [openPlanGame, setOpenPlanGame] = useState(false);
-
-  // --- Додаємо стани та функції для скасування гри ---
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [gameToCancel, setGameToCancel] = useState<any>(null);
   function handleCancelGame(game: any) {
     setCancelDialogOpen(true);
     setGameToCancel(game);
   }
+
   async function confirmCancelGame() {
     setCancelDialogOpen(false);
     if (!gameToCancel?.id) return;
@@ -119,18 +127,15 @@ function BattlePageContent() {
       setLoading(true);
       fetch(`/api/battle?warband_id=${warband.id}`)
         .then(res => res.json())
-        .then(setData)
+        .then(data => {
+          setData(data);
+          setSelectedGame(calculateNextGameNumber(data));
+        })
         .finally(() => setLoading(false));
     } catch {}
     setGameToCancel(null);
   }
-  // --- Почати гру (зараз просто reload, можна додати логіку пізніше) ---
-  // --- Додаємо стани для готовності до гри ---
-  const [readyLoading, setReadyLoading] = useState(false);
-  const [readyState, setReadyState] = useState<'none'|'waiting'|'active'>('none');
-  const [lastReadyGameId, setLastReadyGameId] = useState<number|null>(null);
 
-  // --- Почати гру (оновлено: логіка готовності) ---
   async function handleStartGame(game: any) {
     if (!game?.id) return;
     setReadyLoading(true);
@@ -145,11 +150,12 @@ function BattlePageContent() {
       const dataRes = await res.json();
       if (dataRes?.game?.status === 'active') {
         setReadyState('active');
-        // Оновити дані гри
         setLoading(true);
         fetch(`/api/battle?warband_id=${warband.id}`)
           .then(res => res.json())
-          .then(setData)
+          .then(data => {
+            setData(data);
+          })
           .finally(() => {
             setLoading(false);
             setReadyLoading(false);
@@ -157,12 +163,13 @@ function BattlePageContent() {
             setLastReadyGameId(null);
           });
       } else {
-        // Якщо ще не активна, просто оновити дані (щоб побачити статус опонента)
         setTimeout(() => {
           setLoading(true);
           fetch(`/api/battle?warband_id=${warband.id}`)
             .then(res => res.json())
-            .then(setData)
+            .then(data => {
+              setData(data);
+            })
             .finally(() => {
               setLoading(false);
               setReadyLoading(false);
@@ -175,11 +182,6 @@ function BattlePageContent() {
     }
   }
 
-  // --- Додаємо UI для підтвердження/відхилення результату, якщо статус pending_approval ---
-  const [approveLoading, setApproveLoading] = useState(false);
-  const [rejectLoading, setRejectLoading] = useState(false);
-  const [resultActionError, setResultActionError] = useState<string|null>(null);
-
   async function handleApproveResult(gameId: number) {
     setApproveLoading(true);
     setResultActionError(null);
@@ -190,17 +192,16 @@ function BattlePageContent() {
         body: JSON.stringify({ game_id: gameId, action: 'approve' })
       });
       if (!res.ok) throw new Error('Помилка підтвердження результату');
-      setLoading(true);
-      fetch(`/api/battle?warband_id=${warband.id}`)
-        .then(res => res.json())
-        .then(setData)
-        .finally(() => setLoading(false));
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     } catch (e) {
       setResultActionError('Не вдалося підтвердити результат. Спробуйте ще раз.');
     } finally {
       setApproveLoading(false);
     }
   }
+
   async function handleRejectResult(gameId: number) {
     setRejectLoading(true);
     setResultActionError(null);
@@ -211,11 +212,9 @@ function BattlePageContent() {
         body: JSON.stringify({ game_id: gameId, action: 'reject' })
       });
       if (!res.ok) throw new Error('Помилка відхилення результату');
-      setLoading(true);
-      fetch(`/api/battle?warband_id=${warband.id}`)
-        .then(res => res.json())
-        .then(setData)
-        .finally(() => setLoading(false));
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     } catch (e) {
       setResultActionError('Не вдалося відхилити результат. Спробуйте ще раз.');
     } finally {
@@ -223,7 +222,29 @@ function BattlePageContent() {
     }
   }
 
+  function calculateNextGameNumber(data: any) {
+    if (!data || !data.games || !Array.isArray(data.games) || !data.warband) {
+      return 1;
+    }
+
+    let maxGameNumber = 0;
+    data.games.forEach((game: any) => {
+      if (game.status === 'finished') {
+        if (game.warband_1_id === data.warband.id && game.warband_1_gameNumber) {
+          maxGameNumber = Math.max(maxGameNumber, game.warband_1_gameNumber);
+        }
+        if (game.warband_2_id === data.warband.id && game.warband_2_gameNumber) {
+          maxGameNumber = Math.max(maxGameNumber, game.warband_2_gameNumber);
+        }
+      }
+    });
+    
+    const nextGameNumber = maxGameNumber + 1;
+    return nextGameNumber > 12 ? 12 : (nextGameNumber < 1 ? 1 : nextGameNumber);
+  }
+
   if (loading) return <Box sx={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'60vh'}}><CircularProgress /></Box>;
+  
   if (!data || !data.warband) return (
     <Box sx={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',gap:2}}>
       <Typography align="center" color="error" variant="h5">Варбанди не знайдено</Typography>
@@ -233,46 +254,41 @@ function BattlePageContent() {
   );
 
   const { warband, games, stories } = data;
-  // Визначаємо ігри цієї варбанди з номерами
+  
   const gamesByNumber: Record<number, any> = {};
   (games || []).forEach((g: any) => {
     if (g.warband_1_id === warband.id && g.warband_1_gameNumber) gamesByNumber[g.warband_1_gameNumber] = g;
     if (g.warband_2_id === warband.id && g.warband_2_gameNumber) gamesByNumber[g.warband_2_gameNumber] = g;
   });
-  // --- нова логіка для stories ---
-  // Визначаємо історії по game_id (battle API)
+  
   const storiesByNumber: Record<number, string> = {};
   (stories || []).forEach((s: any) => { if (typeof s.game_id === 'number') storiesByNumber[s.game_id] = s.text; });
   const currentStory = storiesByNumber[selectedGame - 1] || null;
   const currentGame = gamesByNumber[selectedGame];
 
-  // --- Блок з інформацією про варбанду супротивника для гри (planned, active, pending_approval) ---
   let opponentPlannedBlock: React.ReactNode = null;
   if (
     currentGame &&
     (currentGame.status === 'planned' || currentGame.status === 'active' || currentGame.status === 'pending_approval') &&
     (currentGame.warbands_games_warband_1_idTowarbands || currentGame.warbands_games_warband_2_idTowarbands)
   ) {
-    // Визначаємо, хто я: player1 чи player2
     const isPlayer1 = currentGame.player1_id === warband.players.id;
     const oppWarband = isPlayer1
       ? currentGame.warbands_games_warband_2_idTowarbands
       : currentGame.warbands_games_warband_1_idTowarbands;
     const oppPlayer = oppWarband?.players;
     const oppRoster = oppWarband?.rosters && oppWarband.rosters.length > 0 ? oppWarband.rosters[0] : null;
-    // Використовуємо напряму з БД, без парсингу JSON
+    
     const modelCount = oppRoster?.model_count ?? 0;
     const ducats = oppRoster?.ducats ?? 0;
     const gloryPoints = oppRoster?.glory_points ?? 0;
     opponentPlannedBlock = (
       <Box sx={{mt:2, mb:1, p:1, border:'1px solid #eee', borderRadius:2, background:'#fafbfc'}}>
-        {/* 1. Супротивник (аватар + ім'я) */}
         <Typography variant="subtitle2" sx={{mb:0.5}}>Супротивник:</Typography>
         <Box sx={{display:'flex',alignItems:'center',gap:1,flexWrap:'wrap', mb:1}}>
           <Avatar src={oppPlayer?.avatar_url ? `/api/avatar/${oppPlayer.avatar_url.replace(/^.*[\\/]/, '')}` : undefined} sx={{width:32,height:32}} />
           <span>{oppPlayer?.name || oppPlayer?.login}</span>
         </Box>
-        {/* 2. Варбанда (іконка+title) + назва варбанди */}
         <Typography variant="subtitle2" sx={{mb:0.5}}>Варбанда:</Typography>
         <Box sx={{display:'flex',alignItems:'center',gap:1,mt:0.5, mb:1}}>
           {oppWarband?.catalogue_name && FACTION_AVATARS[oppWarband.catalogue_name] && (
@@ -282,7 +298,6 @@ function BattlePageContent() {
           )}
           <span>{oppWarband?.name}</span>
         </Box>
-        {/* 3. Статистика з іконками та тултіпами */}
         <Box sx={{display:'flex',alignItems:'center',gap:2,mt:0.5}}>
           <Tooltip title="Кількість моделей" arrow>
             <span style={{display:'flex',alignItems:'center',gap:4}}>
@@ -331,7 +346,6 @@ function BattlePageContent() {
         ) : null}
         {warband.name}
       </div>
-      {/* Повзунок над обома блоками */}
       <Box sx={{mb:2, px:2}}>
         <Slider
           value={selectedGame}
@@ -385,7 +399,9 @@ function BattlePageContent() {
           setLoading(true);
           fetch(`/api/battle?warband_id=${warband.id}`)
             .then(res => res.json())
-            .then(setData)
+            .then(data => {
+              setData(data);
+            })
             .finally(() => setLoading(false));
         }}
       />

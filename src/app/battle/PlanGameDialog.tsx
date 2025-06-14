@@ -127,7 +127,10 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
                     control={<Radio/>}
                     label={
                       <span style={{display:'flex',alignItems:'center',gap:8}}>
-                        <Avatar sx={{width:24,height:24}} src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : undefined} />
+                        <Avatar 
+                          sx={{width:24,height:24}} 
+                          src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : '/api/avatar/default'} 
+                        />
                         <span>{player.name||player.login}</span>
                       </span>
                     }
@@ -167,11 +170,16 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
             )}
           </>
         )}
-      </DialogContent>
-      <DialogActions>
+      </DialogContent>      <DialogActions>
         <Button onClick={onClose}>Скасувати</Button>
-        <Button disabled={!selectedOpponentWarband || planGameLoading || playersList.length === 0} onClick={handlePlanGame} variant="contained">Запропонувати гру</Button>
+        <Button disabled={!selectedOpponentWarband || planGameLoading || playersList.length === 0} onClick={handlePlanGame} variant="contained">
+          Запропонувати гру
+        </Button>
       </DialogActions>
+      {/* Info text explaining the confirmation process */}
+      <Typography variant="caption" color="text.secondary" sx={{px:3, pb:2, textAlign:'center', display:'block'}}>
+        Після пропозиції гри, обидва гравці повинні підтвердити свою готовність перш ніж гра почнеться.
+      </Typography>
     </Dialog>
   );
 };

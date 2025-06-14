@@ -7,6 +7,25 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { filename: string } }
 ) {
+  // If "default" is requested, serve the default avatar immediately
+  if (params.filename === 'default') {
+    const defaultPngPath = path.join(process.cwd(), 'public', 'default_avatar.png');
+    try {
+      const buffer = await fs.readFile(defaultPngPath);
+      return new NextResponse(buffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Content-Length': buffer.length.toString(),
+          'Cache-Control': 'public, max-age=31536000, immutable',
+        },
+      });
+    } catch (error) {
+      console.error('Failed to read default avatar:', error);
+      return new NextResponse('Default avatar not found', { status: 404 });
+    }
+  }
+
   // Try to find player by avatar_url (filename)
   const player = await prisma.players.findFirst({
     where: { avatar_url: params.filename },

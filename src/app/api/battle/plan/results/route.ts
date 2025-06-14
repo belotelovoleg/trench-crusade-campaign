@@ -18,6 +18,8 @@ export async function PATCH(req: Request) {
     player2_injuries,
     player1_skillAdvancements,
     player2_skillAdvancements,
+    player1_becomesElite,
+    player2_becomesElite,
     player1_explorationDice,
     player2_explorationDice
   } = body;
@@ -70,9 +72,19 @@ export async function PATCH(req: Request) {
       player1_isApprovedResult: false,
       player2_isApprovedResult: false,
       status: 'active',
-    };
-  } else {
+    };  } else {
     // Подача результату — статус pending_approval
+    // Спочатку скидаємо підтвердження обох гравців
+    update.player1_isApprovedResult = false;
+    update.player2_isApprovedResult = false;
+    
+    // Потім встановлюємо підтвердження для поточного гравця
+    if (warband.id === game.warband_1_id) {
+      update.player1_isApprovedResult = true;
+    } else if (warband.id === game.warband_2_id) {
+      update.player2_isApprovedResult = true;
+    }
+    
     update.vp_1 = typeof vp_1 === 'number' ? vp_1 : 0;
     update.vp_2 = typeof vp_2 === 'number' ? vp_2 : 0;
     update.gp_1 = typeof gp_1 === 'number' ? gp_1 : 0;
@@ -85,12 +97,22 @@ export async function PATCH(req: Request) {
         .filter((x) => x && typeof x.name === 'string' && x.name.trim() && x.roll !== undefined && x.roll !== null && String(x.roll).trim() !== '')
         .map((x) => ({ name: x.name.trim(), roll: Number(x.roll) }));
     }
+    
+    function normalizeNameOnlyArray(arr: any) {
+      if (!Array.isArray(arr)) return [];
+      return arr
+        .filter((x) => x && typeof x.name === 'string' && x.name.trim())
+        .map((x) => ({ name: x.name.trim() }));
+    }
+    
     if (typeof player1_calledReinforcements === 'boolean') update.player1_calledReinforcements = player1_calledReinforcements;
     if (typeof player2_calledReinforcements === 'boolean') update.player2_calledReinforcements = player2_calledReinforcements;
     if (player1_injuries !== undefined) update.player1_injuries = normalizeArray(player1_injuries);
     if (player2_injuries !== undefined) update.player2_injuries = normalizeArray(player2_injuries);
     if (player1_skillAdvancements !== undefined) update.player1_skillAdvancements = normalizeArray(player1_skillAdvancements);
     if (player2_skillAdvancements !== undefined) update.player2_skillAdvancements = normalizeArray(player2_skillAdvancements);
+    if (player1_becomesElite !== undefined) update.player1_becomesElite = normalizeNameOnlyArray(player1_becomesElite);
+    if (player2_becomesElite !== undefined) update.player2_becomesElite = normalizeNameOnlyArray(player2_becomesElite);
     if (typeof player1_explorationDice === 'number') update.player1_explorationDice = player1_explorationDice;
     if (typeof player2_explorationDice === 'number') update.player2_explorationDice = player2_explorationDice;
   }

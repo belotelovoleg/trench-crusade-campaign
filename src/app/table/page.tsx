@@ -109,11 +109,12 @@ export default function TablePage() {
                           </Tooltip>
                         ) : null}
                       </TableCell>
-                      <TableCell>{w.players?.name || ''}</TableCell>
-                      <TableCell>
+                      <TableCell>{w.players?.name || ''}</TableCell>                      <TableCell>
                         {w.players?.avatar_url ? (
                           <Avatar src={`/api/avatar/${w.players.avatar_url.replace(/^.*[\\/]/, '')}`} alt={w.players.name} />
-                        ) : null}
+                        ) : (
+                          <Avatar src="/api/avatar/default" alt={w.players?.name} />
+                        )}
                       </TableCell>
                       <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
                       {Array.from({ length: 12 }).map((_, i) => {
