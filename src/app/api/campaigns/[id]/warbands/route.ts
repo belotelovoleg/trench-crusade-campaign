@@ -34,9 +34,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     if (!userCampaign) {
       return NextResponse.json({ error: 'Access denied. You must be a participant in this campaign to view warbands.' }, { status: 403 });
-    }
-
-    // Get all warbands in this campaign with stats
+    }    // Get all warbands in this campaign with stats
     const warbands = await prisma.warbands.findMany({
       where: { 
         campaign_id: campaignId,
@@ -50,11 +48,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             id: true,
             login: true,
             name: true,
+            avatar_url: true,
           },
         },
         rosters: {
-          orderBy: { uploaded_at: 'desc' },
-          take: 1,          select: {
+          select: {
             id: true,
             ducats: true,
             model_count: true,
@@ -62,6 +60,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
             game_number: true,
             file_url: true,
           },
+          orderBy: { game_number: 'desc' },
         },
       },
       orderBy: { id: 'asc' },
@@ -108,7 +107,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           status: warband.status,
           catalogue_name: warband.catalogue_name,
           player: warband.players,
-          rosters: warband.rosters || [],
+          rosters: (warband.rosters || []).map((r: any) => ({
+            ...r,
+            file_url: r.id ? `/api/roster?roster_id=${r.id}` : null,
+          })),
           latest_roster: warband.rosters[0] || null,
           total_vp,
           total_games,
