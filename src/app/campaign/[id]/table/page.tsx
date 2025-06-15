@@ -49,14 +49,15 @@ export default function TablePage() {
   const [loading, setLoading] = useState(true);
   const [sortByVP, setSortByVP] = useState(true); // true за замовчуванням
   const params = useParams();
-  const campaignId = params.id as string;
-
-  useEffect(() => {
+  const campaignId = params.id as string;  useEffect(() => {
     if (!campaignId) return;
     
     fetch(`/api/campaigns/${campaignId}/warbands`)
       .then(res => res.json())
-      .then(data => setWarbands(Array.isArray(data.warbands) ? data.warbands : []))
+      .then(data => {
+        console.log('API response:', data);
+        setWarbands(Array.isArray(data.warbands) ? data.warbands : []);
+      })
       .finally(() => setLoading(false));
   }, [campaignId]);
 
@@ -64,14 +65,74 @@ export default function TablePage() {
     ? [...warbands].sort((a, b) => (b.total_vp || 0) - (a.total_vp || 0))
     : warbands;
 
+  // Create render functions to avoid JSX whitespace issues
+  const renderGameCells = (w: Warband) => {
+    return Array.from({ length: 12 }).map((_, i) => {
+      const games = w.games?.filter((g) => g.number === i + 1) || [];
+      if (games.length > 0) {
+        return (
+          <TableCell key={i}>
+            {games.map((game) => (
+              <div key={game.id} style={{fontSize:12, marginBottom: games.length > 1 ? 8 : 0}}>
+                <div style={{fontWeight: 500, color: '#666', marginBottom: 2}}>
+                  {gameStatusMap[game.status] || game.status}
+                </div>
+                <b>vs {game.opponent}</b><br/>
+                VP: <b>{game.vp}</b> / <b>{game.opponent_vp}</b><br/>
+                GP: <b>{game.gp}</b> / <b>{game.opponent_gp}</b>
+              </div>
+            ))}
+          </TableCell>
+        );
+      }
+      return <TableCell key={i}></TableCell>;
+    });
+  };
+
+  const renderTableRow = (w: Warband) => {
+    return (
+      <TableRow key={w.id}>
+        <TableCell>{w.name}</TableCell>
+        <TableCell>
+          {w.catalogue_name && FACTION_AVATARS[w.catalogue_name] ? (
+            <Tooltip title={w.catalogue_name} arrow>
+              <img
+                src={FACTION_AVATARS[w.catalogue_name]}
+                alt={w.catalogue_name}
+                style={{width:32,height:32,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}}
+              />
+            </Tooltip>
+          ) : null}
+        </TableCell>
+        <TableCell>{w.players?.name || ''}</TableCell>
+        <TableCell>
+          {w.players?.avatar_url ? (
+            <Avatar src={`/api/avatar/${w.players.avatar_url}`} alt={w.players.name} />
+          ) : (
+            <Avatar src="/api/avatar/default" alt={w.players?.name} />
+          )}
+        </TableCell>
+        <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
+        {renderGameCells(w)}
+      </TableRow>
+    );
+  };
+
+  const renderGameHeaders = () => {
+    return Array.from({ length: 12 }).map((_, i) => (
+      <TableCell key={i}>Гра {i + 1}</TableCell>
+    ));
+  };
+
   return (
     <div className={styles.container}>
       <Box sx={{ maxWidth: '100vw', overflowX: 'auto', mt: 4, p: 2 }}>
         <Typography variant="h4" align="center" gutterBottom>
           Таблиця результатів
-        </Typography>
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>
+        </Typography>        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
+          </Box>
         ) : (
           (warbands.length === 0 || warbands.every(w => !w.games || w.games.length === 0)) ? (
             <Typography variant="h6" align="center" sx={{ mt: 4, mb: 4, fontWeight: 600, color: 'secondary.main' }}>
@@ -94,56 +155,11 @@ export default function TablePage() {
                     >
                       Сума VP {sortByVP ? '▼' : ''}
                     </TableCell>
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <TableCell key={i}>Гра {i + 1}</TableCell>
-                    ))}
+                    {renderGameHeaders()}
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {sortedWarbands.map((w) => (
-                    <TableRow key={w.id}>
-                      <TableCell>{w.name}</TableCell>
-                      <TableCell>
-                        {w.catalogue_name && FACTION_AVATARS[w.catalogue_name] ? (
-                          <Tooltip title={w.catalogue_name} arrow>
-                            <img
-                              src={FACTION_AVATARS[w.catalogue_name]}
-                              alt={w.catalogue_name}
-                              style={{width:32,height:32,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}}
-                            />
-                          </Tooltip>
-                        ) : null}
-                      </TableCell>
-                      <TableCell>{w.players?.name || ''}</TableCell>                      <TableCell>
-                        {w.players?.avatar_url ? (
-                          <Avatar src={`/api/avatar/${w.players.avatar_url}`} alt={w.players.name} />
-                        ) : (
-                          <Avatar src="/api/avatar/default" alt={w.players?.name} />
-                        )}
-                      </TableCell>
-                      <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
-                      {Array.from({ length: 12 }).map((_, i) => {
-                        const games = w.games?.filter((g) => g.number === i + 1) || [];
-                        if (games.length > 0) {
-                          return (
-                            <TableCell key={i}>
-                              {games.map((game, idx) => (
-                                <div key={game.id} style={{fontSize:12, marginBottom: games.length > 1 ? 8 : 0}}>
-                                  <div style={{fontWeight: 500, color: '#666', marginBottom: 2}}>
-                                    {gameStatusMap[game.status] || game.status}
-                                  </div>
-                                  <b>vs {game.opponent}</b><br/>
-                                  VP: <b>{game.vp}</b> / <b>{game.opponent_vp}</b><br/>
-                                  GP: <b>{game.gp}</b> / <b>{game.opponent_gp}</b>
-                                </div>
-                              ))}
-                            </TableCell>
-                          );
-                        }
-                        return <TableCell key={i}></TableCell>;
-                      })}
-                    </TableRow>
-                  ))}
+                  {sortedWarbands.map(renderTableRow)}
                 </TableBody>
               </Table>
             </TableContainer>
