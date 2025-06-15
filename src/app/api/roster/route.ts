@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   let roster_id = searchParams.get('roster_id');
   const warband_id = searchParams.get('warband_id');
   const game_number = searchParams.get('game_number');
+  const format = searchParams.get('format'); // New parameter for response format
 
   let roster: { id: number; file_content: string | null } | null = null;
   if (warband_id && game_number) {
@@ -32,6 +33,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Roster content missing in database', code: 'not_found', reason: 'db_file_content' }, { status: 200 });
   }
 
+  // If format=json is requested, return JSON data instead of file download
+  if (format === 'json') {
+    try {
+      const rosterData = JSON.parse(roster.file_content);
+      return NextResponse.json({ 
+        id: roster.id,
+        file_content: roster.file_content,
+        roster_data: rosterData 
+      });
+    } catch (error) {
+      return NextResponse.json({ 
+        error: 'Invalid JSON in roster content', 
+        code: 'parse_error', 
+        reason: 'invalid_json' 
+      }, { status: 400 });
+    }
+  }
+
+  // Default behavior: return as file download (unchanged)
   const fileName = `roster_${roster.id}.json`;
   return new Response(roster.file_content, {
     status: 200,

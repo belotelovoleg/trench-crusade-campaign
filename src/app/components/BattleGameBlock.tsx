@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { Paper, Typography, CircularProgress, Button, Avatar, Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Paper, Typography, CircularProgress, Button, Avatar, Box, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import StarIcon from '@mui/icons-material/Star';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import GameResultsDialog from './GameResultsDialog';
+import FACTION_AVATARS from '../factionAvatars';
 
 interface BattleGameBlockProps {
   currentGame: any;
@@ -16,9 +19,11 @@ interface BattleGameBlockProps {
   readyLoading?: boolean;
   readyState?: 'none'|'waiting'|'active';
   lastReadyGameId?: number|null;
-  currentUserId?: number; // <-- add this prop
+  currentUserId?: number;
   handleApproveResult: (gameId: number) => void;
   handleRejectResult: (gameId: number) => void;
+  warband?: any; // Add warband prop to access status
+  campaignId?: string; // Add campaignId prop for navigation
 }
 
 const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
@@ -36,12 +41,13 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
   readyState,
   lastReadyGameId,
   currentUserId,
-  handleApproveResult,
-  handleRejectResult
+  warband,
+  campaignId
 }) => {
   const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [editResultsDialogOpen, setEditResultsDialogOpen] = useState(false);
+  const [viewResultsDialogOpen, setViewResultsDialogOpen] = useState(false);
   const [confirmMode, setConfirmMode] = useState<'approve'|'reject'|null>(null);
 
   // Determine readiness state for UI
@@ -107,26 +113,137 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
       </Paper>
       <Paper sx={{p:2, borderRadius: 2, background: 'rgba(255,255,255,0.75)'}}>
         {currentGame ? (
-          currentGame.status === 'finished' ? (
-            <>
-              <Typography variant="subtitle1">Гра {selectedGame}</Typography>
-              <Box sx={{display:'flex',gap:2,alignItems:'center',mb:1}}>
-                <Avatar src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? 
-                  `/api/avatar/${currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url}` : 
-                  '/api/avatar/default'} />
-                <span>{currentGame.warbands_games_warband_1_idTowarbands.name}</span>
-                <span>({currentGame.warbands_games_warband_1_idTowarbands.players.name})</span>
-                <b>VP: {currentGame.vp_1}</b>
-                <b>GP: {currentGame.gp_1}</b>
-              </Box>
-              <Box sx={{display:'flex',gap:2,alignItems:'center'}}>
-                <Avatar src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? 
-                  `/api/avatar/${currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url}` : 
-                  '/api/avatar/default'} />
-                <span>{currentGame.warbands_games_warband_2_idTowarbands.name}</span>
-                <span>({currentGame.warbands_games_warband_2_idTowarbands.players.name})</span>
-                <b>VP: {currentGame.vp_2}</b>
-                <b>GP: {currentGame.gp_2}</b>
+          currentGame.status === 'finished' ? (            <>              <Typography variant="subtitle1" sx={{mb:1}}>
+                Гра {selectedGame} 
+                <Typography component="span" variant="caption" color="text.secondary" sx={{ml:1}}>
+                  (клікніть на результат для деталей)
+                </Typography>
+              </Typography>
+
+              <Box 
+                sx={{
+                  display:'flex',
+                  gap:2,
+                  alignItems:'center',
+                  mb:1,
+                  p:1,
+                  borderRadius:1,
+                  cursor: 'pointer',
+                  border: '1px solid transparent',
+                  '&:hover': { 
+                    backgroundColor: 'rgba(0,0,0,0.04)',
+                    border: '1px solid rgba(0,0,0,0.1)'
+                  }
+                }}                
+                onClick={() => setResultsDialogOpen(true)}
+              >
+                {/* Player 1 faction avatar */}
+                {currentGame.warbands_games_warband_1_idTowarbands.catalogue_name &&
+                 FACTION_AVATARS[currentGame.warbands_games_warband_1_idTowarbands.catalogue_name] && (
+                  <Tooltip title={currentGame.warbands_games_warband_1_idTowarbands.catalogue_name} arrow>
+                    <img 
+                      src={FACTION_AVATARS[currentGame.warbands_games_warband_1_idTowarbands.catalogue_name]} 
+                      alt={currentGame.warbands_games_warband_1_idTowarbands.catalogue_name} 
+                      style={{width:32,height:32,borderRadius:'50%',objectFit:'cover'}} 
+                    />
+                  </Tooltip>
+                )}
+                {/* Player 1 avatar */}
+                <Avatar 
+                  src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? 
+                    `/api/avatar/${currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url}` : 
+                    '/api/avatar/default'} 
+                  sx={{ width: 32, height: 32 }}
+                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0, flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', wordBreak: 'break-word' }}>
+                    {currentGame.warbands_games_warband_1_idTowarbands.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    ({currentGame.warbands_games_warband_1_idTowarbands.players.name})
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Tooltip title="Переможні бали (VP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <StarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        {currentGame.vp_1}
+                      </Typography>
+                    </Box>
+                  </Tooltip>                  <Tooltip title="Слава (GP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <MilitaryTechIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        {currentGame.gp_1}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                </Box>
+              </Box>              <Box 
+                sx={{
+                  display:'flex',
+                  gap:2,
+                  alignItems:'center',
+                  p:1,
+                  borderRadius:1,
+                  cursor: 'pointer',
+                  border: '1px solid transparent',
+                  '&:hover': { 
+                    backgroundColor: 'rgba(0,0,0,0.04)',
+                    border: '1px solid rgba(0,0,0,0.1)'
+                  }
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Clicked on result - opening dialog');
+                  setResultsDialogOpen(true);
+                }}
+              >
+                {/* Player 2 faction avatar */}
+                {currentGame.warbands_games_warband_2_idTowarbands.catalogue_name && 
+                 FACTION_AVATARS[currentGame.warbands_games_warband_2_idTowarbands.catalogue_name] && (
+                  <Tooltip title={currentGame.warbands_games_warband_2_idTowarbands.catalogue_name} arrow>
+                    <img 
+                      src={FACTION_AVATARS[currentGame.warbands_games_warband_2_idTowarbands.catalogue_name]} 
+                      alt={currentGame.warbands_games_warband_2_idTowarbands.catalogue_name} 
+                      style={{width:32,height:32,borderRadius:'50%',objectFit:'cover'}} 
+                    />
+                  </Tooltip>
+                )}
+                {/* Player 2 avatar */}
+                <Avatar 
+                  src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? 
+                    `/api/avatar/${currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url}` : 
+                    '/api/avatar/default'} 
+                  sx={{ width: 32, height: 32 }}
+                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0, flex: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 'bold', wordBreak: 'break-word' }}>
+                    {currentGame.warbands_games_warband_2_idTowarbands.name}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    ({currentGame.warbands_games_warband_2_idTowarbands.players.name})
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Tooltip title="Переможні бали (VP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <StarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        {currentGame.vp_2}
+                      </Typography>
+                    </Box>
+                  </Tooltip>                  <Tooltip title="Слава (GP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <MilitaryTechIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                        {currentGame.gp_2}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                </Box>
               </Box>
             </>
           ) : (
@@ -232,16 +349,27 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                     }}
                   />
                 </>
-              )}              <GameResultsDialog
+              )}                <GameResultsDialog
                 open={resultsDialogOpen}
                 onClose={() => setResultsDialogOpen(false)}
                 game={currentGame}
                 onResultsSaved={(action) => {
                   setResultsDialogOpen(false);
-                  // Оновити дані після збереження результатів
                   if (typeof window !== 'undefined') window.location.reload();
                 }}
-              />              {/* Cancel game button */}
+              />
+
+              {/* View-only dialog for finished games */}
+              <GameResultsDialog
+                open={viewResultsDialogOpen}
+                onClose={() => setViewResultsDialogOpen(false)}
+                game={currentGame}
+                onResultsSaved={() => setViewResultsDialogOpen(false)}
+                readOnly={true}
+                adminViewOnly={true}
+              />
+
+              {/* Cancel game button */}
               {currentGame.status === 'planned' && (
                 <Button 
                   size="small" 
@@ -254,15 +382,29 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                 </Button>
               )}
             </>
-          )
-        ) : (
+          )        ) : (
           <Box sx={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
             <Typography color="text.secondary" variant="body2">
-              Гра ще не запланована. Ви можете запросити опонента для нової гри.
+              Гра ще не запланована. {warband?.status === 'needs_update' ? 'Спочатку оновіть ростер варбанди, а потім запросіть опонента для нової гри.' : 'Ви можете запросити опонента для нової гри.'}
             </Typography>
-            <Button variant="contained" color="primary" sx={{mt:2}} onClick={()=>setOpenPlanGame(true)}>
-              Запланувати гру
-            </Button>
+            {warband?.status === 'needs_update' ? (
+              <Button 
+                variant="contained" 
+                color="warning" 
+                sx={{mt:2, fontWeight: 700}} 
+                onClick={() => {
+                  if (campaignId && warband?.id) {
+                    window.location.href = `/campaign/${campaignId}/warband-apply?warband_id=${warband.id}&warband_name=${encodeURIComponent(warband.name || '')}`;
+                  }
+                }}
+              >
+                <span style={{fontSize:18,marginRight:6}}>🛠️</span> Оновити ростер
+              </Button>
+            ) : (
+              <Button variant="contained" color="primary" sx={{mt:2}} onClick={()=>setOpenPlanGame(true)}>
+                Запланувати гру
+              </Button>
+            )}
           </Box>
         )}
       </Paper>

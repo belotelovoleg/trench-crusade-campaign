@@ -312,6 +312,8 @@ a.secondary {
     max-width: 100%;
     width: 100%;
     padding: 0 16px;
+    justify-content: center;
+    align-items: center;
   }
   
   .mainPageTitle {

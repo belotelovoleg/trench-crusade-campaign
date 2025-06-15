@@ -20,6 +20,8 @@ interface GameResultsDialogProps {
 }
 
 const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, game, onResultsSaved, readOnly = false, confirmMode = null, adminViewOnly = false, adminEditMode = false }) => {
+  console.log('GameResultsDialog component called with props:', { open, readOnly, adminViewOnly, gameId: game?.id });
+  
   const [vp1, setVp1] = useState(game.vp_1 || 0);
   const [vp2, setVp2] = useState(game.vp_2 || 0);
   const [gp1, setGp1] = useState(game.gp_1 || 0);
@@ -46,14 +48,17 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
   const [explore2, setExplore2] = useState(game.player2_explorationDice || '');
   const [adminStatus, setAdminStatus] = useState(game.status || 'planned');
   const [modelNames1, setModelNames1] = useState<string[]>([]);
-  const [modelNames2, setModelNames2] = useState<string[]>([]);
-  // State variables to control Autocomplete dropdown open state
-  const [inj1AutocompleteOpen, setInj1AutocompleteOpen] = useState(false);
-  const [inj2AutocompleteOpen, setInj2AutocompleteOpen] = useState(false);
-  const [sk1AutocompleteOpen, setSk1AutocompleteOpen] = useState(false);
-  const [sk2AutocompleteOpen, setSk2AutocompleteOpen] = useState(false);
-  const [elite1AutocompleteOpen, setElite1AutocompleteOpen] = useState(false);
-  const [elite2AutocompleteOpen, setElite2AutocompleteOpen] = useState(false);
+  const [modelNames2, setModelNames2] = useState<string[]>([]);  // State variables to control Autocomplete dropdown open state - using Maps for multiple instances
+  const [autocompleteOpenStates, setAutocompleteOpenStates] = useState<{[key: string]: boolean}>({});
+  
+  // Helper functions to manage autocomplete open states
+  const setAutocompleteOpen = (key: string, open: boolean) => {
+    setAutocompleteOpenStates(prev => ({ ...prev, [key]: open }));
+  };
+  
+  const getAutocompleteOpen = (key: string) => {
+    return autocompleteOpenStates[key] || false;
+  };
   
   // Arrays to track which accordions are expanded
   const [expandedAccordions, setExpandedAccordions] = useState<{[key: string]: boolean}>({
@@ -242,15 +247,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
     setElites2(Array.isArray(game.player2_becomesElite) ? game.player2_becomesElite : []);
     setExplore1(game.player1_explorationDice ?? '');
     setExplore2(game.player2_explorationDice ?? '');
-    setAdminStatus(game.status ?? 'planned');
-    
+    setAdminStatus(game.status ?? 'planned');    
     // Reset all autocomplete open states
-    setInj1AutocompleteOpen(false);
-    setInj2AutocompleteOpen(false);
-    setSk1AutocompleteOpen(false);
-    setSk2AutocompleteOpen(false);
-    setElite1AutocompleteOpen(false);
-    setElite2AutocompleteOpen(false);
+    setAutocompleteOpenStates({});
     
     // Reset all accordion expansion states
     setExpandedAccordions({
@@ -262,16 +261,24 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
       'elites2': false
     });
   }, [game, open]);
-
   // Effect to load roster data and extract model names
   useEffect(() => {
     const loadRosterData = async () => {
-      try {        // Try to load roster data for player 1
+      try {
         if (game.warband_1_roster_id) {
-          const res1 = await fetch(`/api/roster?roster_id=${game.warband_1_roster_id}`);
+          const res1 = await fetch(`/api/roster?roster_id=${game.warband_1_roster_id}&format=json`);
+          
           if (res1.ok) {
             const data = await res1.json();
-            if (data.file_content) {
+            if (data.roster_data) {
+              try {
+                const names = extractModelNames(data.roster_data);
+                setModelNames1(names);
+              } catch (e) {
+                console.error("Error extracting model names for player 1:", e);
+              }
+            } else if (data.file_content) {
+              // Fallback: try to parse file_content directly
               try {
                 const rosterJson = JSON.parse(data.file_content);
                 const names = extractModelNames(rosterJson);
@@ -281,13 +288,20 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
               }
             }
           }
-        }
-          // Try to load roster data for player 2
+        }          // Try to load roster data for player 2
         if (game.warband_2_roster_id) {
-          const res2 = await fetch(`/api/roster?roster_id=${game.warband_2_roster_id}`);
+          const res2 = await fetch(`/api/roster?roster_id=${game.warband_2_roster_id}&format=json`);
           if (res2.ok) {
             const data = await res2.json();
-            if (data.file_content) {
+            if (data.roster_data) {
+              try {
+                const names = extractModelNames(data.roster_data);
+                setModelNames2(names);
+              } catch (e) {
+                console.error("Error extracting model names for player 2:", e);
+              }
+            } else if (data.file_content) {
+              // Fallback: try to parse file_content directly
               try {
                 const rosterJson = JSON.parse(data.file_content);
                 const names = extractModelNames(rosterJson);
@@ -345,6 +359,8 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
     return modelNames;
   };
 
+  alert ('a');
+
   // Function to handle accordion expansion state changes
   const handleAccordionChange = (accordionId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
     // Update the expanded state of this accordion
@@ -352,39 +368,35 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
       ...prev,
       [accordionId]: isExpanded
     }));
-    
-    // If the accordion is being collapsed, close any associated autocomplete dropdown
+      // If the accordion is being collapsed, close any associated autocomplete dropdown
     if (!isExpanded) {
-      // Close the appropriate autocomplete dropdown based on which accordion is being collapsed
-      switch (accordionId) {
-        case 'injuries1':
-          setInj1AutocompleteOpen(false);
-          break;
-        case 'injuries2':
-          setInj2AutocompleteOpen(false);
-          break;
-        case 'skills1':
-          setSk1AutocompleteOpen(false);
-          break;
-        case 'skills2':
-          setSk2AutocompleteOpen(false);
-          break;
-        case 'elites1':
-          setElite1AutocompleteOpen(false);
-          break;
-        case 'elites2':
-          setElite2AutocompleteOpen(false);
-          break;
-      }
+      // Close all autocomplete dropdowns for this accordion type
+      const keysToClose = Object.keys(autocompleteOpenStates).filter(key => key.startsWith(accordionId));
+      const newStates = { ...autocompleteOpenStates };
+      keysToClose.forEach(key => {
+        newStates[key] = false;
+      });
+      setAutocompleteOpenStates(newStates);
     }
-  };
-
-  // Prevent showing action buttons after dialog is closed
+  };  // Prevent showing action buttons after dialog is closed
   if (!open) return null;
-  return (
+  
+  if (!game) {
+    return (
+      <Dialog open={open} onClose={onClose}>
+        <DialogTitle>Error</DialogTitle>
+        <DialogContent>
+          <Typography>No game data provided to dialog</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }  return (
     <Dialog 
       open={open} 
-      onClose={onClose} 
+      onClose={onClose}
       maxWidth="md" 
       fullWidth
       PaperProps={{
@@ -393,7 +405,7 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
           boxShadow: 8
         }
       }}
-    >      <DialogTitle sx={{ 
+    ><DialogTitle sx={{ 
         borderBottom: '1px solid', 
         borderColor: 'divider',
         pb: 1.5,
@@ -527,9 +539,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                           options={modelNames1}
                           freeSolo
                           fullWidth
-                          open={expandedAccordions.injuries1 && inj1AutocompleteOpen}
-                          onOpen={() => setInj1AutocompleteOpen(true)}
-                          onClose={() => setInj1AutocompleteOpen(false)}
+                          open={expandedAccordions.injuries1 && getAutocompleteOpen(`injuries1-${i}`)}
+                          onOpen={() => setAutocompleteOpen(`injuries1-${i}`, true)}
+                          onClose={() => setAutocompleteOpen(`injuries1-${i}`, false)}
                           renderInput={(params) => (
                             <TextField 
                               {...params} 
@@ -563,9 +575,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                         options={modelNames1}
                         freeSolo
                         fullWidth
-                        open={expandedAccordions.injuries1 && inj1AutocompleteOpen}
-                        onOpen={() => setInj1AutocompleteOpen(true)}
-                        onClose={() => setInj1AutocompleteOpen(false)}
+                        open={expandedAccordions.injuries1 && getAutocompleteOpen('injuries1-new')}
+                        onOpen={() => setAutocompleteOpen('injuries1-new', true)}
+                        onClose={() => setAutocompleteOpen('injuries1-new', false)}
                         renderInput={(params) => (
                           <TextField 
                             {...params} 
@@ -611,9 +623,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                           options={modelNames1}
                           freeSolo
                           fullWidth
-                          open={expandedAccordions.skills1 && sk1AutocompleteOpen}
-                          onOpen={() => setSk1AutocompleteOpen(true)}
-                          onClose={() => setSk1AutocompleteOpen(false)}
+                          open={expandedAccordions.skills1 && getAutocompleteOpen(`skills1-${i}`)}
+                          onOpen={() => setAutocompleteOpen(`skills1-${i}`, true)}
+                          onClose={() => setAutocompleteOpen(`skills1-${i}`, false)}
                           renderInput={(params) => (
                             <TextField 
                               {...params} 
@@ -647,9 +659,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                         options={modelNames1}
                         freeSolo
                         fullWidth
-                        open={expandedAccordions.skills1 && sk1AutocompleteOpen}
-                        onOpen={() => setSk1AutocompleteOpen(true)}
-                        onClose={() => setSk1AutocompleteOpen(false)}
+                        open={expandedAccordions.skills1 && getAutocompleteOpen('skills1-new')}
+                        onOpen={() => setAutocompleteOpen('skills1-new', true)}
+                        onClose={() => setAutocompleteOpen('skills1-new', false)}
                         renderInput={(params) => (
                           <TextField 
                             {...params} 
@@ -695,9 +707,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                           options={modelNames1}
                           freeSolo
                           fullWidth
-                          open={expandedAccordions.elites1 && elite1AutocompleteOpen}
-                          onOpen={() => setElite1AutocompleteOpen(true)}
-                          onClose={() => setElite1AutocompleteOpen(false)}
+                          open={expandedAccordions.elites1 && getAutocompleteOpen(`elites1-${i}`)}
+                          onOpen={() => setAutocompleteOpen(`elites1-${i}`, true)}
+                          onClose={() => setAutocompleteOpen(`elites1-${i}`, false)}
                           renderInput={(params) => (
                             <TextField 
                               {...params} 
@@ -722,9 +734,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                         options={modelNames1}
                         freeSolo
                         fullWidth
-                        open={expandedAccordions.elites1 && elite1AutocompleteOpen}
-                        onOpen={() => setElite1AutocompleteOpen(true)}
-                        onClose={() => setElite1AutocompleteOpen(false)}
+                        open={expandedAccordions.elites1 && getAutocompleteOpen('elites1-new')}
+                        onOpen={() => setAutocompleteOpen('elites1-new', true)}
+                        onClose={() => setAutocompleteOpen('elites1-new', false)}
                         renderInput={(params) => (
                           <TextField 
                             {...params} 
@@ -847,9 +859,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                           options={modelNames2}
                           freeSolo
                           fullWidth
-                          open={expandedAccordions.injuries2 && inj2AutocompleteOpen}
-                          onOpen={() => setInj2AutocompleteOpen(true)}
-                          onClose={() => setInj2AutocompleteOpen(false)}
+                          open={expandedAccordions.injuries2 && getAutocompleteOpen(`injuries2-${i}`)}
+                          onOpen={() => setAutocompleteOpen(`injuries2-${i}`, true)}
+                          onClose={() => setAutocompleteOpen(`injuries2-${i}`, false)}
                           renderInput={(params) => (
                             <TextField 
                               {...params} 
@@ -883,9 +895,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                         options={modelNames2}
                         freeSolo
                         fullWidth
-                        open={expandedAccordions.injuries2 && inj2AutocompleteOpen}
-                        onOpen={() => setInj2AutocompleteOpen(true)}
-                        onClose={() => setInj2AutocompleteOpen(false)}
+                        open={expandedAccordions.injuries2 && getAutocompleteOpen('injuries2-new')}
+                        onOpen={() => setAutocompleteOpen('injuries2-new', true)}
+                        onClose={() => setAutocompleteOpen('injuries2-new', false)}
                         renderInput={(params) => (
                           <TextField 
                             {...params} 
@@ -931,9 +943,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                           options={modelNames2}
                           freeSolo
                           fullWidth
-                          open={expandedAccordions.skills2 && sk2AutocompleteOpen}
-                          onOpen={() => setSk2AutocompleteOpen(true)}
-                          onClose={() => setSk2AutocompleteOpen(false)}
+                          open={expandedAccordions.skills2 && getAutocompleteOpen(`skills2-${i}`)}
+                          onOpen={() => setAutocompleteOpen(`skills2-${i}`, true)}
+                          onClose={() => setAutocompleteOpen(`skills2-${i}`, false)}
                           renderInput={(params) => (
                             <TextField 
                               {...params} 
@@ -967,9 +979,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                         options={modelNames2}
                         freeSolo
                         fullWidth
-                        open={expandedAccordions.skills2 && sk2AutocompleteOpen}
-                        onOpen={() => setSk2AutocompleteOpen(true)}
-                        onClose={() => setSk2AutocompleteOpen(false)}
+                        open={expandedAccordions.skills2 && getAutocompleteOpen('skills2-new')}
+                        onOpen={() => setAutocompleteOpen('skills2-new', true)}
+                        onClose={() => setAutocompleteOpen('skills2-new', false)}
                         renderInput={(params) => (
                           <TextField 
                             {...params} 
@@ -1015,9 +1027,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                           options={modelNames2}
                           freeSolo
                           fullWidth
-                          open={expandedAccordions.elites2 && elite2AutocompleteOpen}
-                          onOpen={() => setElite2AutocompleteOpen(true)}
-                          onClose={() => setElite2AutocompleteOpen(false)}
+                          open={expandedAccordions.elites2 && getAutocompleteOpen(`elites2-${i}`)}
+                          onOpen={() => setAutocompleteOpen(`elites2-${i}`, true)}
+                          onClose={() => setAutocompleteOpen(`elites2-${i}`, false)}
                           renderInput={(params) => (
                             <TextField 
                               {...params} 
@@ -1042,9 +1054,9 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
                         options={modelNames2}
                         freeSolo
                         fullWidth
-                        open={expandedAccordions.elites2 && elite2AutocompleteOpen}
-                        onOpen={() => setElite2AutocompleteOpen(true)}
-                        onClose={() => setElite2AutocompleteOpen(false)}
+                        open={expandedAccordions.elites2 && getAutocompleteOpen('elites2-new')}
+                        onOpen={() => setAutocompleteOpen('elites2-new', true)}
+                        onClose={() => setAutocompleteOpen('elites2-new', false)}
                         renderInput={(params) => (
                           <TextField 
                             {...params} 
@@ -1078,39 +1090,44 @@ const GameResultsDialog: React.FC<GameResultsDialogProps> = ({ open, onClose, ga
             <Typography>{error}</Typography>
           </Box>
         )}
-      </DialogContent>      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>        <Button onClick={onClose} variant="outlined" color="inherit">Закрити</Button>
-        {!adminViewOnly && (readOnly ? (
-          <>
-            <Button 
-              onClick={handleSwitchToEditMode} 
-              variant="outlined" 
-              color="primary" 
-              disabled={saving}
-              startIcon={<EditIcon />}
-            >
-              Змінити результат
-            </Button>
-            {confirmMode === 'approve' && (
+      </DialogContent>      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>        <Button onClick={onClose} variant="outlined" color="inherit">Закрити</Button>        {!adminViewOnly && (readOnly ? (
+          // Only show edit/approve buttons for games that are not finished
+          game.status !== 'finished' ? (
+            <>
               <Button 
-                onClick={handleApprove} 
-                variant="contained" 
-                color="success" 
+                onClick={handleSwitchToEditMode} 
+                variant="outlined" 
+                color="primary" 
                 disabled={saving}
-                startIcon={<CheckCircleIcon />}
+                startIcon={<EditIcon />}
               >
-                Підтвердити результат
+                Змінити результат
               </Button>
-            )}
-          </>
+              {confirmMode === 'approve' && (
+                <Button 
+                  onClick={handleApprove} 
+                  variant="contained" 
+                  color="success" 
+                  disabled={saving}
+                  startIcon={<CheckCircleIcon />}
+                >
+                  Підтвердити результат
+                </Button>
+              )}
+            </>
+          ) : null
         ) : (
-          <Button 
-            onClick={adminEditMode ? handleAdminSave : handleSave} 
-            variant="contained" 
-            disabled={saving}
-            startIcon={<SaveIcon />}
-          >
-            {adminEditMode ? 'Зберегти (адмін)' : 'Зберегти'}
-          </Button>
+          // Show save button for non-readonly mode (unless game is finished)
+          game.status !== 'finished' && (
+            <Button 
+              onClick={adminEditMode ? handleAdminSave : handleSave} 
+              variant="contained" 
+              disabled={saving}
+              startIcon={<SaveIcon />}
+            >
+              {adminEditMode ? 'Зберегти (адмін)' : 'Зберегти'}
+            </Button>
+          )
         ))}
       </DialogActions>
     </Dialog>

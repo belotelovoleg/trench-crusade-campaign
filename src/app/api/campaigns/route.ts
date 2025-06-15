@@ -25,11 +25,31 @@ export async function GET() {
             warbands: true,
           },
         },
+        players_campaigns: {
+          where: {
+            player_id: authResult.userId
+          },
+          select: {
+            id: true
+          }
+        }
       },
       orderBy: { created_at: 'desc' },
     });
 
-    return NextResponse.json({ campaigns });
+    // Transform the data to include isUserMember flag
+    const campaignsWithMembership = campaigns.map(campaign => ({
+      id: campaign.id,
+      name: campaign.name,
+      description: campaign.description,
+      image: campaign.image,
+      created_at: campaign.created_at,
+      updated_at: campaign.updated_at,
+      _count: campaign._count,
+      isUserMember: campaign.players_campaigns.length > 0
+    }));
+
+    return NextResponse.json({ campaigns: campaignsWithMembership });
   } catch (error) {
     console.error('Error fetching campaigns:', error);
     return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 });

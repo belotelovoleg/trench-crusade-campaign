@@ -36,9 +36,7 @@ export async function GET(
 
     if (!userCampaign) {
       return NextResponse.json({ error: 'Not authorized for this campaign' }, { status: 403 });
-    }
-
-    // Get the warband (like old API but campaign-specific)
+    }    // Get the warband (like old API but campaign-specific)
     const warband = await prisma.warbands.findUnique({
       where: { 
         id: warbandId,

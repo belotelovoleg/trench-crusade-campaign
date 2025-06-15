@@ -3,9 +3,9 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Box, Typography, Paper, CircularProgress, Button, Avatar, Slider, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import styles from '../page.module.css';
-import PlanGameDialog from '../../../battle/PlanGameDialog';
+import PlanGameDialog from '../../../components/PlanGameDialog';
 import FACTION_AVATARS from '../../../factionAvatars';
-import BattleGameBlock from '../../../battle/BattleGameBlock';
+import BattleGameBlock from '../../../components/BattleGameBlock';
 
 type WarbandRoster = {
   id: number;
@@ -370,8 +370,7 @@ function BattlePageContent() {
             )}
           </Paper>
         </div>
-        <div className={styles.battleButtonBlock}>
-          <BattleGameBlock
+        <div className={styles.battleButtonBlock}>          <BattleGameBlock
             currentGame={currentGame}
             selectedGame={selectedGame}
             roster={roster}
@@ -388,6 +387,8 @@ function BattlePageContent() {
             currentUserId={warband?.players?.id}
             handleApproveResult={handleApproveResult}
             handleRejectResult={handleRejectResult}
+            warband={warband}
+            campaignId={campaignId}
           />
         </div>
       </div>

@@ -272,8 +272,7 @@ export default function CampaignHome() {
                             </span>
                           </Tooltip>
                         </div>
-                        
-                        {w.status === 'needs_update' ? (
+                          {w.status === 'needs_update' ? (
                           <Button
                             variant="contained"
                             color="warning"
@@ -292,7 +291,7 @@ export default function CampaignHome() {
                               width: '100%'
                             }}
                             component={Link}
-                            href={`/campaign/${campaignId}/warband-apply?warband_id=${w.id}&warband_name=${encodeURIComponent(w.name)}`}
+                            href={`/campaign/${campaignId}/battle?warband_id=${w.id}`}
                           >
                             <span style={{fontSize:18,marginRight:6}}>🛠️</span> Оновити ростер
                           </Button>

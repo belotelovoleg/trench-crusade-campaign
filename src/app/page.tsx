@@ -16,6 +16,7 @@ interface Campaign {
   description: string | null;
   image: string | null;
   created_at: string;
+  isUserMember: boolean;
   _count: {
     players_campaigns: number;
     warbands: number;
@@ -179,8 +180,7 @@ export default function CampaignSelectionPage() {
                       <SecurityIcon fontSize="small" color="secondary" />
                       <Typography variant="body2">{campaign._count.warbands}</Typography>
                     </Box>
-                  </Tooltip>                </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  </Tooltip>                </Box>                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                   {user?.is_super_admin && (
                     <Tooltip title="Редагувати кампанію" arrow>
                       <IconButton
@@ -198,17 +198,28 @@ export default function CampaignSelectionPage() {
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Button 
-                    variant="contained" 
-                    size="small"
-                    disabled={joiningCampaign === campaign.id}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleJoinCampaign(campaign.id);
-                    }}
-                  >
-                    {joiningCampaign === campaign.id ? <CircularProgress size={16} /> : 'Приєднатися'}
-                  </Button>
+                  {!campaign.isUserMember && (
+                    <Button 
+                      variant="contained" 
+                      size="small"
+                      disabled={joiningCampaign === campaign.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleJoinCampaign(campaign.id);
+                      }}
+                    >
+                      {joiningCampaign === campaign.id ? <CircularProgress size={16} /> : 'Приєднатися'}
+                    </Button>
+                  )}
+                  {campaign.isUserMember && (
+                    <Typography 
+                      variant="body2" 
+                      color="success.main"
+                      sx={{ fontWeight: 500 }}
+                    >
+                      Учасник
+                    </Typography>
+                  )}
                 </Box>
               </Box>
             </CardContent>
