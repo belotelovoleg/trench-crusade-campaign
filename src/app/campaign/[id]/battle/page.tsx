@@ -2,7 +2,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Box, Typography, Paper, CircularProgress, Button, Avatar, Slider, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import styles from '../../page.module.css';
+import styles from '../page.module.css';
 import PlanGameDialog from '../../../battle/PlanGameDialog';
 import FACTION_AVATARS from '../../../factionAvatars';
 import BattleGameBlock from '../../../battle/BattleGameBlock';
@@ -53,7 +53,6 @@ function BattlePageContent() {
   }, [campaignId, warbandIdNum]);
 
   useEffect(() => {
-    console.log('loadRoster:', { warbandIdNum, selectedGame });
     setRoster(null);
     setRosterError(null);
     
