@@ -101,7 +101,7 @@ export default function CampaignGamesAdmin() {
 
   if (loading) return (
     <div className={adminStyles.adminContainer}>
-      <div style={{ minHeight: 'calc(100vh - var(--navbar-height))', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className={adminStyles.adminCenterBox}>
         <CircularProgress />
       </div>
     </div>

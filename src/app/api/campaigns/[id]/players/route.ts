@@ -24,22 +24,21 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       }
     });    if (!userCampaign) {
       return NextResponse.json({ error: 'Not authorized for this campaign' }, { status: 403 });
-    }
-      // Get players who have warbands in this campaign
+    }    // Get all players who are part of this campaign (not just those with warbands)
     const playersData = await prisma.players.findMany({
       where: {
-        warbands: {
+        players_campaigns: {
           some: {
             campaign_id: campaignId
           }
         }
-      },      select: {
+      },select: {
         id: true,
         name: true,
         login: true,
         avatar_url: true,
         notes: true,
-        is_active: true, // Include active status from players table        is_super_admin: true, // Include super admin status
+        is_active: true, // Include active status from players table        
         idt: true, // Include registration date
         udt: true, // Include updated date
         ldt: true, // Include last login date

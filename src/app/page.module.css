@@ -312,6 +312,7 @@ a.secondary {
     max-width: 100%;
     width: 100%;
     padding: 0 16px;
+    align-items: center;
   }
   
   .mainPageTitle {
@@ -329,6 +330,19 @@ a.secondary {
     max-height: 100%;
     flex: 1;
   }
+
+  /* Battle page mobile centering */
+  .battleAboutBlock, .battleButtonBlock {
+    max-width: 100%;
+    width: 100%;
+    padding: 24px 16px;
+    margin: 0;
+  }
+  
+  .battleAboutBlock {
+    max-height: 100%;
+    flex: 1;
+  }
 }
 
 @media (max-width: 480px) {
@@ -340,6 +354,14 @@ a.secondary {
   .mainPageAboutBlock, .mainPageButtonBlock {
     padding: 16px 12px;
     border-radius: 12px;
+  }
+
+  /* Battle page mobile adjustments for small screens */
+  .battleAboutBlock, .battleButtonBlock {
+    max-width: 100%;
+    padding: 16px 12px;
+    border-radius: 12px;
+    margin: 0;
   }
 }
 
@@ -370,27 +392,24 @@ a.secondary {
 .campaignSelectionRoot {
   width: 100vw;
   min-height: calc(100vh - var(--navbar-height));
+  height: calc(100vh - var(--navbar-height));
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 20px;
+  padding: 32px 16px;
+  overflow-y: auto;
   background: url('/bg/bg01.jpg') center/cover no-repeat, linear-gradient(120deg, #232526 0%, #414345 100%);
 }
 
-.campaignSelectionHeader {
-  width: 100%;
-  max-width: 1200px;
-  margin-bottom: 32px;
-}
-
 .campaignGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 24px;
   width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0;
 }
 
 .campaignCard {
@@ -400,19 +419,114 @@ a.secondary {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
   overflow: hidden;
   height: fit-content;
+  flex: 0 0 320px;
+  max-width: 400px;
 }
 
 @media (max-width: 768px) {
   .campaignSelectionRoot {
     padding: 16px;
+    height: calc(100vh - var(--navbar-height));
   }
   
   .campaignGrid {
-    grid-template-columns: 1fr;
     gap: 16px;
   }
   
   .campaignSelectionHeader h1 {
     font-size: 2rem !important;
+  }
+}
+
+/* Battle page specific blocks */
+.battleAboutBlock {
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.2);
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 50vw;
+  padding: 32px 28px;
+  font-size: 1.1rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  max-height: calc(100vh - var(--navbar-height) - 160px);
+}
+
+.battleButtonBlock {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 420px;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px #0001;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .mainPageBlocks {
+    flex-direction: column-reverse;
+    gap: 24px;
+    max-width: 100%;
+    width: 100%;
+    padding: 0 16px;
+    align-items: center;
+  }
+  
+  .mainPageTitle {
+    font-size: 1.8rem;
+    margin: 24px 16px 12px 16px;
+  }
+  
+  .mainPageAboutBlock, .mainPageButtonBlock {
+    max-width: 100%;
+    width: 100%;
+    padding: 24px 16px;
+  }
+  
+  .mainPageAboutBlock {
+    max-height: 100%;
+    flex: 1;
+  }
+
+  /* Battle page mobile centering */
+  .battleAboutBlock, .battleButtonBlock {
+    max-width: 100%;
+    width: 100%;
+    padding: 24px 16px;
+    margin: 0;
+  }
+  
+  .battleAboutBlock {
+    max-height: 100%;
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainPageTitle {
+    font-size: 1.5rem;
+    margin: 16px 12px 12px 12px;
+  }
+  
+  .mainPageAboutBlock, .mainPageButtonBlock {
+    padding: 16px 12px;
+    border-radius: 12px;
+  }
+
+  /* Battle page mobile adjustments for small screens */
+  .battleAboutBlock, .battleButtonBlock {
+    max-width: 100%;
+    padding: 16px 12px;
+    border-radius: 12px;
+    margin: 0;
   }
 }

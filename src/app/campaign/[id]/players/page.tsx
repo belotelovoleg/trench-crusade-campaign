@@ -83,11 +83,10 @@ export default function PlayersPage() {
         setSliderValue(sliderDefaults);
       })
       .finally(() => setLoading(false));
-  }, [params.id]);
-
-  const filteredPlayers = players
+  }, [params.id]);  const filteredPlayers = players
     .filter((player) => {
       if (statusFilter === "all") return true;
+      // When filtering by specific status, only show players who have warbands with that status
       return player.warbands?.some((wb) => wb.status === statusFilter);
     })
     .map((player) => ({
@@ -126,32 +125,17 @@ export default function PlayersPage() {
         </span>
       </Tooltip>
     );
-  };
-  if (loading) {
+  };  if (loading) {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "calc(100vh - var(--navbar-height))",
-        }}
-      >
+      <div className="consistentLoadingContainer">
         <CircularProgress />
-      </Box>
+      </div>
     );
   }
 
   if (filteredPlayers.length === 0 && statusFilter === "all") {
     return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: "calc(100vh - var(--navbar-height))",
-        }}
-      >
+      <div className="consistentBackgroundContainer" style={{ justifyContent: 'center' }}>
         <Paper
           sx={{
             p: 4,
@@ -166,18 +150,19 @@ export default function PlayersPage() {
             Немає гравців у цій кампанії.
           </Typography>
         </Paper>
-      </Box>
+      </div>
     );  }
 
   return (
-    <Box
-      sx={{
-        maxWidth: 900,
-        margin: { xs: "16px auto", sm: "32px auto" },
-        padding: { xs: 1, sm: 2 },
-        minHeight: "calc(100vh - var(--navbar-height))",
-      }}
-    >
+    <div className="consistentBackgroundContainer">
+      <Box
+        sx={{
+          maxWidth: 900,
+          margin: { xs: "16px auto", sm: "0px auto" },
+          padding: { xs: 1, sm: 2 },
+          width: '100%'
+        }}
+      >
       <Box
         sx={{
           display: "flex",
@@ -438,9 +423,9 @@ export default function PlayersPage() {
             onClick={() => setNotesDialog({ open: false, notes: "", player: "" })}
           >
             Закрити
-          </Button>
-        </DialogActions>
+          </Button>        </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </div>
   );
 }

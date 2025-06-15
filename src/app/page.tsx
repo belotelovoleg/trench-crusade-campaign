@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, Typography, CircularProgress, Card, CardContent, CardMedia, Box, Fab, IconButton, Alert, Snackbar } from '@mui/material';
+import { Button, Typography, CircularProgress, Card, CardContent, CardMedia, Box, Fab, IconButton, Alert, Snackbar, Tooltip } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
-import PeopleIcon from '@mui/icons-material/People';
-import GroupIcon from '@mui/icons-material/Group';
+import PersonIcon from '@mui/icons-material/Person';
+import SecurityIcon from '@mui/icons-material/Security';
 import LogoutIcon from '@mui/icons-material/Logout';
+import EditIcon from '@mui/icons-material/Edit';
 import styles from './page.module.css';
 import { getRandomGreeting } from './trenchGreetings';
 
@@ -103,26 +104,19 @@ export default function CampaignSelectionPage() {
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
-    if (loading) {
+  };    if (loading) {
     return (
-      <main style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        minHeight: 'calc(100vh - var(--navbar-height))' 
-      }}>
+      <div className="consistentLoadingContainer">
         <CircularProgress />
-      </main>
+      </div>
     );
   }
 
   // If not authenticated after loading, don't render anything (redirect will happen)
   if (!user) {
     return null;
-  }
-  return (
-    <div className={styles.campaignSelectionRoot}>
+  }  return (
+    <div className="consistentBackgroundContainer">
       <div className={styles.campaignSelectionHeader}>
         <Typography variant="h3" component="h1" sx={{ 
           fontWeight: 700, 
@@ -140,7 +134,7 @@ export default function CampaignSelectionPage() {
         }}>
           Оберіть кампанію, щоб приєднатися до битви
         </Typography>
-      </div>      <div className={styles.campaignGrid}>
+      </div><div className={styles.campaignGrid}>
         {campaigns.map((campaign) => (
           <Card 
             key={campaign.id}
@@ -172,28 +166,50 @@ export default function CampaignSelectionPage() {
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   {campaign.description}
                 </Typography>
-              )}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              )}              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <PeopleIcon fontSize="small" color="primary" />
-                    <Typography variant="body2">{campaign._count.players_campaigns}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <GroupIcon fontSize="small" color="secondary" />
-                    <Typography variant="body2">{campaign._count.warbands}</Typography>
-                  </Box>
-                </Box>                <Button 
-                  variant="contained" 
-                  size="small"
-                  disabled={joiningCampaign === campaign.id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleJoinCampaign(campaign.id);
-                  }}
-                >
-                  {joiningCampaign === campaign.id ? <CircularProgress size={16} /> : 'Приєднатися'}
-                </Button>
+                  <Tooltip title="Гравці" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <PersonIcon fontSize="small" color="primary" />
+                      <Typography variant="body2">{campaign._count.players_campaigns}</Typography>
+                    </Box>
+                  </Tooltip>
+                  <Tooltip title="Варбанди" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      <SecurityIcon fontSize="small" color="secondary" />
+                      <Typography variant="body2">{campaign._count.warbands}</Typography>
+                    </Box>
+                  </Tooltip>                </Box>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  {user?.is_super_admin && (
+                    <Tooltip title="Редагувати кампанію" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/edit-campaign/${campaign.id}`);
+                        }}
+                        sx={{ 
+                          backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                          '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.2)' }
+                        }}
+                      >
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Button 
+                    variant="contained" 
+                    size="small"
+                    disabled={joiningCampaign === campaign.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleJoinCampaign(campaign.id);
+                    }}
+                  >
+                    {joiningCampaign === campaign.id ? <CircularProgress size={16} /> : 'Приєднатися'}
+                  </Button>
+                </Box>
               </Box>
             </CardContent>
           </Card>

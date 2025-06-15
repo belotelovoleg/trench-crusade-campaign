@@ -63,9 +63,8 @@ export default function RegisterPage() {
       setErrors(errorMap);
     }
   };
-
   return (
-    <Box className={styles.container}>
+    <Box className="consistentBackgroundContainer" style={{ justifyContent: 'center' }}>
       <Paper
         elevation={6}
         className={styles.paper}

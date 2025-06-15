@@ -84,30 +84,29 @@ export default function CampaignHome() {
       setJoinLoading(false);
     }
   };
-
   if (loading || aboutLoading) {
     return (
-      <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - var(--navbar-height))' }}>
+      <div className="consistentLoadingContainer">
         <CircularProgress />
-      </main>
+      </div>
     );
   }
 
   if (!campaign) {
     return (
-      <main style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - var(--navbar-height))' }}>
+      <div className="consistentLoadingContainer">
         <Typography variant="h6">Campaign not found</Typography>
-      </main>    );
-  }  // Визначаємо, чи about реально порожній (навіть якщо <p></p> або пробіли)
+      </div>
+    );
+  }// Визначаємо, чи about реально порожній (навіть якщо <p></p> або пробіли)
   let isAboutEmpty = true;
   if (about) {
     // Видаляємо всі теги, пробіси, переноси
     const text = about.replace(/<[^>]+>/g, '').replace(/\s+/g, '');
     isAboutEmpty = !text;
   }
-
   return (
-    <div className={styles.mainPageRoot}>
+    <div className="consistentBackgroundContainer">
       <div className={styles.mainPageTitle}>Ласкаво просимо до {campaign.name}</div>
       <div className={styles.mainPageBlocks}>
         <div className={styles.mainPageAboutBlock}>          {!isAboutEmpty ? (

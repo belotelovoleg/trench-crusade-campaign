@@ -37,8 +37,7 @@ export async function GET(
     const warbands = await prisma.warbands.findMany({
       where: {
         campaign_id: campaignId
-      },
-      include: {
+      },      include: {
         players: {
           select: {
             id: true,
@@ -59,11 +58,16 @@ export async function GET(
           orderBy: { game_number: 'desc' },
           take: 3 // Latest 3 rosters for admin overview
         }
-      },
-      orderBy: { id: 'desc' }
+      },      orderBy: { id: 'desc' }
     });
 
-    return NextResponse.json({ warbands });
+    // Map 'players' field to 'player' for frontend compatibility
+    const warbandsWithPlayerMapping = warbands.map(warband => ({
+      ...warband,
+      player: warband.players
+    }));
+
+    return NextResponse.json({ warbands: warbandsWithPlayerMapping });
   } catch (error) {
     console.error('Error fetching admin warbands:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

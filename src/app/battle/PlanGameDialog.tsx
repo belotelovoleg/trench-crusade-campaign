@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, CircularProgress, RadioGroup, FormControlLabel, Radio, List, ListItemAvatar, ListItemText, Avatar, ListItemButton, Tooltip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, LinearProgress, RadioGroup, FormControlLabel, Radio, List, ListItemAvatar, ListItemText, Avatar, ListItemButton, Tooltip } from '@mui/material';
 import FACTION_AVATARS from '../factionAvatars';
 
 interface PlanGameDialogProps {
@@ -101,24 +101,65 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
       setPlanGameLoading(false);
     }
   }
-
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog 
+      open={open} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth      PaperProps={{
+        sx: {
+          backgroundColor: 'rgba(255, 255, 255, 0.75)',
+          backdropFilter: 'blur(4px)',
+          borderRadius: '16px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+        }
+      }}
+      BackdropProps={{
+        sx: {
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(4px)',
+        }
+      }}
+    >
       <DialogTitle>Запланувати гру</DialogTitle>
-      <DialogContent>
-        {loadingPlayers ? <CircularProgress/> : planGameError ? (
+      <DialogContent
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(8px)',
+          borderRadius: '12px',
+          margin: '8px',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+        }}
+      >
+        {loadingPlayers ? (
+          <>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Завантаження списку гравців...
+            </Typography>
+            <LinearProgress />
+          </>
+        ) : planGameError ? (
           <Typography color="error">{planGameError}</Typography>
         ) : (
           <>
             <Typography variant="subtitle2" sx={{mb:1}}>Оберіть опонента:</Typography>
             {playersList.length === 0 ? (
               <Typography color="text.secondary" sx={{mb:2}}>Немає доступних опонентів для гри.</Typography>
-            ) : (
-              <RadioGroup value={selectedOpponent?.id||''} onChange={(_,v)=>{
-                const found = playersList.find(p=>p.id==v);
-                setSelectedOpponent(found);
-                setSelectedOpponentWarband(null);
-              }}>
+            ) : (              <RadioGroup 
+                value={selectedOpponent?.id||''} 
+                onChange={(_,v)=>{
+                  const found = playersList.find(p=>p.id==v);
+                  setSelectedOpponent(found);
+                  setSelectedOpponentWarband(null);
+                }}
+                sx={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  marginTop: '8px',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                }}
+              >
                 {playersList.map(player=>(
                   <FormControlLabel
                     key={player.id}
@@ -140,12 +181,26 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
             {selectedOpponent && (
               <>
                 <Typography variant="subtitle2" sx={{mt:2,mb:1}}>Оберіть варбанду опонента:</Typography>
-                {loadingWarbands ? <div>Завантаження...</div> : warbandsError ? (
-                  <div style={{color:'red'}}>{warbandsError}</div>
+                {loadingWarbands ? (
+                  <>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Завантаження варбанд...
+                    </Typography>
+                    <LinearProgress />
+                  </>                ) : warbandsError ? (
+                  <Typography color="error">{warbandsError}</Typography>
                 ) : !warbands.length ? (
-                  <div>Немає активних варбанд</div>
+                  <Typography color="text.secondary">Немає активних варбанд</Typography>
                 ) : (
-                  <List>
+                  <List
+                    sx={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      borderRadius: '8px',
+                      padding: '8px',
+                      marginTop: '8px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                    }}
+                  >
                     {warbands.map(warband => (
                       <ListItemButton key={warband.id} selected={selectedOpponentWarband?.id===warband.id} onClick={()=>setSelectedOpponentWarband(warband)}>
                         <ListItemText 

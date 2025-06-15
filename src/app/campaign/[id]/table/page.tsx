@@ -123,10 +123,9 @@ export default function TablePage() {
       <TableCell key={i}>Гра {i + 1}</TableCell>
     ));
   };
-
   return (
-    <div className={styles.container}>
-      <Box sx={{ maxWidth: '100vw', overflowX: 'auto', mt: 4, p: 2 }}>
+    <div className="consistentBackgroundContainer">
+      <Box sx={{ maxWidth: '100vw', overflowX: 'auto', mt: 4, p: 2, width: '100%' }}>
         <Typography variant="h4" align="center" gutterBottom>
           Таблиця результатів
         </Typography>        {loading ? (

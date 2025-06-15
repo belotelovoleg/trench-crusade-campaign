@@ -360,8 +360,7 @@ function BattlePageContent() {
           sx={{ minWidth: 300, width: '90%', mx: 'auto' }}
         />
         <Typography align="center" variant="subtitle2" sx={{mt:1}}>Гра {selectedGame}</Typography>
-      </Box>
-      <div className={styles.mainPageBlocks}>
+      </Box>      <div className={styles.mainPageBlocks}>
         <div className={styles.battleAboutBlock}>
           <Paper sx={{p:2,minHeight:120, borderRadius:2, background: 'rgba(255,255,255,0.75)'}}>
             {currentStory ? (

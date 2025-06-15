@@ -42,9 +42,8 @@ export default function LoginPage() {
       setStatus(result.error || 'error');
     }
   };
-
   return (
-    <div className={styles.container}>
+    <div className="consistentBackgroundContainer" style={{ justifyContent: 'center' }}>
       <form className={styles.form} onSubmit={handleSubmit}>
         <h2>Вхід</h2>
         <TextField

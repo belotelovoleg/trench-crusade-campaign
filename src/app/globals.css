@@ -33,6 +33,29 @@ a {
   text-decoration: none;
 }
 
+/* Consistent background container for all non-admin, non-profile pages */
+.consistentBackgroundContainer {
+  min-height: calc(100vh - var(--navbar-height));
+  height: calc(100vh - var(--navbar-height));
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-top: 20px;
+}
+
+/* Loading state container with same dimensions */
+.consistentLoadingContainer {
+  min-height: calc(100vh - var(--navbar-height));
+  height: calc(100vh - var(--navbar-height));
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
