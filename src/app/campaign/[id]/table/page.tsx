@@ -4,8 +4,11 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Typography, Box, CircularProgress, Tooltip } from '@mui/material';
+import StarIcon from '@mui/icons-material/Star';
+import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import styles from '../../../page.module.css';
 import FACTION_AVATARS from '../../../factionAvatars';
+import GameResultView from '../../../components/GameResultView';
 
 interface GameCell {
   id: number;
@@ -48,8 +51,11 @@ export default function TablePage() {
   const [warbands, setWarbands] = useState<Warband[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortByVP, setSortByVP] = useState(true); // true за замовчуванням
+  const [gameViewOpen, setGameViewOpen] = useState(false);
+  const [selectedGame, setSelectedGame] = useState<any>(null);
+  const [gameLoading, setGameLoading] = useState(false);
   const params = useParams();
-  const campaignId = params.id as string;  useEffect(() => {
+  const campaignId = params.id as string;useEffect(() => {
     if (!campaignId) return;
     
     fetch(`/api/campaigns/${campaignId}/warbands`)
@@ -60,11 +66,35 @@ export default function TablePage() {
       })
       .finally(() => setLoading(false));
   }, [campaignId]);
-
   const sortedWarbands = sortByVP
     ? [...warbands].sort((a, b) => (b.total_vp || 0) - (a.total_vp || 0))
     : warbands;
 
+  // Handle clicking on a finished game cell
+  const handleGameClick = async (gameId: number) => {
+    if (!gameId) return;
+    
+    setGameLoading(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaignId}/games/${gameId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedGame(data.game);
+        setGameViewOpen(true);
+      } else {
+        console.error('Failed to fetch game data');
+      }
+    } catch (error) {
+      console.error('Error fetching game data:', error);
+    } finally {
+      setGameLoading(false);
+    }
+  };
+
+  const handleCloseGameView = () => {
+    setGameViewOpen(false);
+    setSelectedGame(null);
+  };
   // Create render functions to avoid JSX whitespace issues
   const renderGameCells = (w: Warband) => {
     return Array.from({ length: 12 }).map((_, i) => {
@@ -73,13 +103,77 @@ export default function TablePage() {
         return (
           <TableCell key={i}>
             {games.map((game) => (
-              <div key={game.id} style={{fontSize:12, marginBottom: games.length > 1 ? 8 : 0}}>
-                <div style={{fontWeight: 500, color: '#666', marginBottom: 2}}>
+              <div 
+                key={game.id} 
+                style={{
+                  fontSize: 12, 
+                  marginBottom: games.length > 1 ? 8 : 0,
+                  cursor: game.status === 'finished' ? 'pointer' : 'default',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  border: game.status === 'finished' ? '1px solid transparent' : 'none',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (game.status === 'finished') {
+                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                    e.currentTarget.style.borderColor = '#ddd';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (game.status === 'finished') {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.borderColor = 'transparent';
+                  }
+                }}
+                onClick={() => {
+                  if (game.status === 'finished') {
+                    handleGameClick(game.id);
+                  }
+                }}
+                title={game.status === 'finished' ? 'Натисніть, щоб переглянути результат гри' : ''}
+              >                <div style={{fontWeight: 500, color: '#666', marginBottom: 2}}>
                   {gameStatusMap[game.status] || game.status}
                 </div>
                 <b>vs {game.opponent}</b><br/>
-                VP: <b>{game.vp}</b> / <b>{game.opponent_vp}</b><br/>
-                GP: <b>{game.gp}</b> / <b>{game.opponent_gp}</b>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
+                  <Tooltip title="Переможні бали (VP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                      <StarIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                        {game.vp}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                  <Typography variant="caption">/</Typography>
+                  <Tooltip title="Переможні бали (VP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                      <StarIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                        {game.opponent_vp}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Tooltip title="Слава (GP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                      <MilitaryTechIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                        {game.gp}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                  <Typography variant="caption">/</Typography>
+                  <Tooltip title="Слава (GP)" arrow>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                      <MilitaryTechIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                        {game.opponent_gp}
+                      </Typography>
+                    </Box>
+                  </Tooltip>
+                </Box>
               </div>
             ))}
           </TableCell>
@@ -122,8 +216,7 @@ export default function TablePage() {
     return Array.from({ length: 12 }).map((_, i) => (
       <TableCell key={i}>Гра {i + 1}</TableCell>
     ));
-  };
-  return (
+  };  return (
     <div className="consistentBackgroundContainer">
       <Box sx={{ maxWidth: '100vw', overflowX: 'auto', mt: 4, p: 2, width: '100%' }}>
         <Typography variant="h4" align="center" gutterBottom>
@@ -165,6 +258,32 @@ export default function TablePage() {
           )
         )}
       </Box>
+
+      {/* Game Result View Dialog */}
+      <GameResultView
+        open={gameViewOpen}
+        onClose={handleCloseGameView}
+        game={selectedGame}
+        mode="view"
+      />
+
+      {/* Loading dialog for fetching game data */}
+      {gameLoading && (
+        <Box sx={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          backgroundColor: 'rgba(0,0,0,0.5)', 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          zIndex: 9999
+        }}>
+          <CircularProgress />
+        </Box>
+      )}
     </div>
   );
 }

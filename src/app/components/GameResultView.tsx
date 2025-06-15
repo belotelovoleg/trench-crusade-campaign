@@ -1,8 +1,9 @@
 import React from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Avatar, Tooltip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Avatar, Tooltip, IconButton } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ClearIcon from '@mui/icons-material/Clear';
+import DownloadIcon from '@mui/icons-material/Download';
 import FACTION_AVATARS from '../factionAvatars';
 
 interface GameResultViewProps {
@@ -39,7 +40,65 @@ const GameResultView: React.FC<GameResultViewProps> = ({
   const player1 = game.warbands_games_warband_1_idTowarbands?.players;
   const player2 = game.warbands_games_warband_2_idTowarbands?.players;
   const warband1 = game.warbands_games_warband_1_idTowarbands;
-  const warband2 = game.warbands_games_warband_2_idTowarbands;
+  const warband2 = game.warbands_games_warband_2_idTowarbands;  // Function to download roster for a specific warband in this game
+  const downloadRoster = async (warbandNumber: 1 | 2) => {
+    if (!game) return;
+    
+    const rosterId = warbandNumber === 1 ? game.warband_1_roster_id : game.warband_2_roster_id;
+    const warband = warbandNumber === 1 ? warband1 : warband2;
+    const gameNumber = warbandNumber === 1 ? game.warband_1_gameNumber : game.warband_2_gameNumber;
+    
+    if (!warband) {
+      alert('Варбанда не знайдена');
+      return;
+    }
+
+    try {
+      let response;
+      
+      // Try to get roster by specific roster ID first (most accurate)
+      if (rosterId) {
+        response = await fetch(`/api/roster?roster_id=${rosterId}`);
+      }
+      
+      // Fallback to warband_id + game_number if roster_id doesn't work
+      if (!response || !response.ok) {
+        response = await fetch(`/api/roster?warband_id=${warband.id}&game_number=${gameNumber || 1}`);
+      }
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Check if we have file_url (preferred) or raw roster data
+        if (data.file_url) {
+          const link = document.createElement('a');
+          link.href = data.file_url;
+          link.download = `roster_${warband.name}_game_${game.id}.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else if (data.roster || data) {
+          const rosterData = data.roster || data;
+          const blob = new Blob([JSON.stringify(rosterData, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `roster_${warband.name}_game_${game.id}.json`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } else {
+          alert('Дані ростера не знайдено');
+        }
+      } else {
+        alert('Ростер не знайдено для цієї варбанди');
+      }
+    } catch (error) {
+      console.error('Error downloading roster:', error);
+      alert('Помилка завантаження ростера');
+    }
+  };
 
   return (
     <Dialog 
@@ -75,15 +134,25 @@ const GameResultView: React.FC<GameResultViewProps> = ({
               </Tooltip>
               <span>{player1?.name || player1?.login}</span>
             </Box>
-            
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mt: 1.5, mb: 1 }}>Варбанда:</Typography>
-            <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1.5}}>
-              {warband1?.catalogue_name && FACTION_AVATARS[warband1.catalogue_name] && (
-                <Tooltip title={warband1.catalogue_name} arrow>
-                  <img src={FACTION_AVATARS[warband1.catalogue_name]} alt={warband1.catalogue_name} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}} />
-                </Tooltip>
-              )}
-              <span>{warband1?.name}</span>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mt: 1.5, mb: 1 }}>Варбанда:</Typography>
+            <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1.5,justifyContent:'space-between'}}>
+              <Box sx={{display:'flex',alignItems:'center',gap:1}}>
+                {warband1?.catalogue_name && FACTION_AVATARS[warband1.catalogue_name] && (
+                  <Tooltip title={warband1.catalogue_name} arrow>
+                    <img src={FACTION_AVATARS[warband1.catalogue_name]} alt={warband1.catalogue_name} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}} />
+                  </Tooltip>
+                )}
+                <span>{warband1?.name}</span>
+              </Box>
+              <Tooltip title="Завантажити ростер" arrow>
+                <IconButton 
+                  size="small" 
+                  onClick={() => downloadRoster(1)}
+                  sx={{ color: 'primary.main' }}
+                >
+                  <DownloadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
             
             <Typography sx={{mb:1}}>Переможні бали (VP): <b>{game.vp_1 || 0}</b></Typography>
@@ -134,15 +203,25 @@ const GameResultView: React.FC<GameResultViewProps> = ({
               </Tooltip>
               <span>{player2?.name || player2?.login}</span>
             </Box>
-            
-            <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mt: 1.5, mb: 1 }}>Варбанда:</Typography>
-            <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1.5}}>
-              {warband2?.catalogue_name && FACTION_AVATARS[warband2.catalogue_name] && (
-                <Tooltip title={warband2.catalogue_name} arrow>
-                  <img src={FACTION_AVATARS[warband2.catalogue_name]} alt={warband2.catalogue_name} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}} />
-                </Tooltip>
-              )}
-              <span>{warband2?.name}</span>
+              <Typography variant="subtitle2" sx={{ fontWeight: 'bold', mt: 1.5, mb: 1 }}>Варбанда:</Typography>
+            <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1.5,justifyContent:'space-between'}}>
+              <Box sx={{display:'flex',alignItems:'center',gap:1}}>
+                {warband2?.catalogue_name && FACTION_AVATARS[warband2.catalogue_name] && (
+                  <Tooltip title={warband2.catalogue_name} arrow>
+                    <img src={FACTION_AVATARS[warband2.catalogue_name]} alt={warband2.catalogue_name} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}} />
+                  </Tooltip>
+                )}
+                <span>{warband2?.name}</span>
+              </Box>
+              <Tooltip title="Завантажити ростер" arrow>
+                <IconButton 
+                  size="small" 
+                  onClick={() => downloadRoster(2)}
+                  sx={{ color: 'primary.main' }}
+                >
+                  <DownloadIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
             
             <Typography sx={{mb:1}}>Переможні бали (VP): <b>{game.vp_2 || 0}</b></Typography>

@@ -309,11 +309,11 @@ export default function PlayersPage() {
                       </Box>
 
                       {wb.rosters && wb.rosters.length > 0 && (
-                        <Box>                          {rosterCount > 1 && (
+                        <Box>                          {rosterCount > 0 && (
                             <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
                               <Slider
                                 min={0}
-                                max={rosterCount - 1}
+                                max={Math.max(0, rosterCount - 1)}
                                 step={1}
                                 value={value}                                marks={marks}
                                 onChange={(_, v) =>
@@ -325,7 +325,13 @@ export default function PlayersPage() {
                                     fontSize: { xs: "0.6rem", sm: "0.75rem" },
                                   },
                                 }}
+                                disabled={rosterCount <= 1}
                               />
+                              {rosterCount > 1 && (
+                                <Typography variant="caption" sx={{ ml: 1, alignSelf: 'center' }}>
+                                  Гра {value + 1}
+                                </Typography>
+                              )}
                             </Box>
                           )}{rosterToShow && (
                             <Box
