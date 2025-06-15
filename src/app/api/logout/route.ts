@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Mark route as dynamic since it manipulates cookies
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   // Очищаємо JWT cookie
   return NextResponse.json({ success: true }, {
