@@ -35,7 +35,8 @@ interface Player {
   login: string;
   name: string | null;
   email: string | null;
-  avatar_url: string | null;  notes: string | null;
+  avatar_url: string | null;
+  notes: string | null;
   is_admin: boolean;
   is_active: boolean;
   idt?: string | null;
@@ -64,17 +65,15 @@ export default function AdminPlayers() {
   // --- Сортування ---
   const [orderBy, setOrderBy] = useState<'id'|'login'|'name'|'email'|'idt'|'udt'|'ldt'>('idt');
   const [order, setOrder] = useState<'asc'|'desc'>('desc');
-  useEffect(() => {    const load = async () => {
+
+  useEffect(() => {
+    const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/campaigns/${campaignId}/admin/players`);
+        const res = await fetch(`/api/campaigns/${campaignId}/players`);
         if (!res.ok) throw new Error("Помилка завантаження");
         const data = await res.json();
-        // Map is_campaign_admin from API to is_admin in our local state
-        setPlayers(data.players.map((player: any) => ({
-          ...player,
-          is_admin: player.is_campaign_admin 
-        })));
+        setPlayers(data.players);
       } catch (e: any) {
         setError(e.message || "Помилка");
       } finally {
@@ -96,35 +95,25 @@ export default function AdminPlayers() {
     if (aVal < bVal) return order === 'asc' ? -1 : 1;
     if (aVal > bVal) return order === 'asc' ? 1 : -1;
     return 0;
-  });  const handleEdit = (p: Player) => {
-    // Make sure we're passing is_admin correctly to the edit dialog
-    setEditPlayer({ 
-      ...p
-    });
+  });
+
+  const handleEdit = (p: Player) => {
+    setEditPlayer({ ...p });
     setEditDialogOpen(true);
-  };const handleEditSave = async () => {
+  };
+  const handleEditSave = async () => {
     if (!editPlayer) return;
-    setSaving(true);    try {
-      const res = await fetch(`/api/campaigns/${campaignId}/admin/players`, {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/players`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({          playerId: editPlayer.id,
-          name: editPlayer.name,
-          email: editPlayer.email,
-          notes: editPlayer.notes,
-          is_active: editPlayer.is_active,
-          is_admin: editPlayer.is_admin // Use is_admin consistently
-        }),
+        body: JSON.stringify(editPlayer),
       });
       if (!res.ok) throw new Error("Помилка збереження");
       const data = await res.json();
       setPlayers((players) =>
-        players.map((p) => (p.id === editPlayer.id ? {...p,          name: editPlayer.name,
-          email: editPlayer.email,
-          notes: editPlayer.notes,
-          is_active: editPlayer.is_active,
-          is_admin: editPlayer.is_admin
-        } : p))
+        players.map((p) => (p.id === data.player.id ? data.player : p))
       );
       setEditDialogOpen(false);
     } catch (e: any) {
@@ -134,8 +123,9 @@ export default function AdminPlayers() {
     }
   };
   const handleActiveToggle = async (p: Player) => {
-    setSaving(true);    try {
-      const res = await fetch(`/api/campaigns/${campaignId}/admin/players`, {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/players`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...p, is_active: !p.is_active }),
@@ -153,8 +143,9 @@ export default function AdminPlayers() {
   };
   const handlePasswordChange = async () => {
     if (!passwordDialog.id || newPassword.length < 4) return;
-    setSaving(true);    try {
-      const res = await fetch(`/api/campaigns/${campaignId}/admin/players`, {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/players`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: passwordDialog.id, password: newPassword }),
@@ -171,8 +162,9 @@ export default function AdminPlayers() {
   };
   const handleDelete = async () => {
     if (!deleteDialog.id) return;
-    setSaving(true);    try {
-      const res = await fetch(`/api/campaigns/${campaignId}/admin/players`, {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/players`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: deleteDialog.id }),
@@ -197,7 +189,7 @@ export default function AdminPlayers() {
   }
   if (loading) return (
     <div className={adminStyles.adminContainer}>
-        <div className={adminStyles.adminCenterBox}>
+      <div style={{ minHeight: 'calc(100vh - var(--navbar-height))', minWidth: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <CircularProgress />
       </div>
     </div>
@@ -206,27 +198,18 @@ export default function AdminPlayers() {
 
   return (
     <div className={adminStyles.adminContainer}>
-      <div className={adminStyles.adminCenterBox}>        <Typography variant="h5" sx={{ mb: 2 }}>
+      <div className={adminStyles.adminCenterBox}>
+        <Typography variant="h5" sx={{ mb: 2 }}>
           Керування гравцями
         </Typography>
-        
-        {sortedPlayers.length === 0 ? (
-          <Paper sx={{ p: 3, mb: 2, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary">
-              У кампанії поки що немає гравців
-            </Typography>
-            <Typography color="text.secondary" sx={{ mt: 1 }}>
-              Коли гравці приєднаються до кампанії, вони з'являться тут
-            </Typography>
-          </Paper>
-        ) : (
-          <TableContainer component={Paper}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>ID{orderBy === 'id' ? (order === 'asc' ? ' ▲' : ' ▼') : ''}</TableCell>                  <TableCell>Користувач</TableCell>
-                  <TableCell onClick={() => handleSort('email')} style={{ cursor: 'pointer' }}>Email{orderBy === 'email' ? (order === 'asc' ? ' ▲' : ' ▼') : ''}</TableCell>
-                <TableCell>Адмін кампанії</TableCell>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>ID{orderBy === 'id' ? (order === 'asc' ? ' ▲' : ' ▼') : ''}</TableCell>
+                <TableCell>Користувач</TableCell>
+                <TableCell onClick={() => handleSort('email')} style={{ cursor: 'pointer' }}>Email{orderBy === 'email' ? (order === 'asc' ? ' ▲' : ' ▼') : ''}</TableCell>
+                <TableCell>Адмін</TableCell>
                 <TableCell>Активний</TableCell>
                 <TableCell onClick={() => handleSort('idt')} style={{ cursor: 'pointer' }}>Реєстрація{orderBy === 'idt' ? (order === 'asc' ? ' ▲' : ' ▼') : ''}</TableCell>
                 <TableCell onClick={() => handleSort('udt')} style={{ cursor: 'pointer' }}>Оновлено{orderBy === 'udt' ? (order === 'asc' ? ' ▲' : ' ▼') : ''}</TableCell>
@@ -250,7 +233,8 @@ export default function AdminPlayers() {
                         {p.name && <span style={{ fontSize: '0.85em' }}>{p.name}</span>}
                       </div>
                     </Box>
-                  </TableCell>                  <TableCell>{p.email}</TableCell>                  <TableCell>{p.is_admin ? "Так" : "Ні"}</TableCell>
+                  </TableCell>
+                  <TableCell>{p.email}</TableCell>                  <TableCell>{p.is_admin ? "Так" : "Ні"}</TableCell>
                   <TableCell>
                     <Switch
                       checked={p.is_active} 
@@ -285,10 +269,10 @@ export default function AdminPlayers() {
                     </Tooltip>
                   </TableCell>
                 </TableRow>
-              ))}            </TableBody>
+              ))}
+            </TableBody>
           </Table>
         </TableContainer>
-        )}
         {/* Діалог редагування */}
         <Dialog
           open={editDialogOpen}
@@ -324,7 +308,8 @@ export default function AdminPlayers() {
                   }
                   fullWidth
                   margin="normal"
-                />                <FormControlLabel
+                />
+                <FormControlLabel
                   control={
                     <Switch
                       checked={editPlayer.is_admin}
@@ -336,7 +321,7 @@ export default function AdminPlayers() {
                       }
                     />
                   }
-                  label="Адмін кампанії"
+                  label="Адмін"
                 />
                 <FormControlLabel
                   control={
@@ -356,10 +341,10 @@ export default function AdminPlayers() {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEditDialogOpen(false)} color="inherit" variant="outlined">
+            <Button onClick={() => setEditDialogOpen(false)} color="error">
               Скасувати
             </Button>
-            <Button onClick={handleEditSave} disabled={saving} color="primary" variant="contained">
+            <Button onClick={handleEditSave} disabled={saving} color="primary">
               Зберегти
             </Button>
           </DialogActions>
@@ -381,7 +366,7 @@ export default function AdminPlayers() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPasswordDialog({ open: false, id: null })} color="inherit" variant="outlined">
+            <Button onClick={() => setPasswordDialog({ open: false, id: null })} color="inherit">
               Скасувати
             </Button>
             <Button
@@ -401,7 +386,7 @@ export default function AdminPlayers() {
             Ви впевнені, що хочете видалити гравця <b>{deleteDialog.name}</b>? Цю дію не можна скасувати.
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="inherit" variant="outlined">
+            <Button onClick={() => setDeleteDialog({ open: false, id: null })} color="inherit">
               Скасувати
             </Button>
             <Button onClick={handleDelete} color="error" variant="contained" disabled={saving}>

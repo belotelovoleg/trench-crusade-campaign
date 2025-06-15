@@ -158,10 +158,8 @@ export default function CampaignHome() {
                     disabled={joinLoading}
                     sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
                   >
-                    {joinLoading ? <CircularProgress size={20} /> : 'Приєднатися до кампанії'}
-                  </Button>
+                    {joinLoading ? <CircularProgress size={20} /> : 'Приєднатися до кампанії'}                  </Button>
                   <Button
-                    variant="outlined"
                     color="primary"
                     fullWidth
                     onClick={() => location.href = `/profile`}
@@ -169,7 +167,7 @@ export default function CampaignHome() {
                   >
                     Редагувати профіль
                   </Button>
-                  <Button 
+                  <Button
                     variant="contained" 
                     color="secondary" 
                     fullWidth 
@@ -203,7 +201,6 @@ export default function CampaignHome() {
                   Перейти до адмін-частини
                 </Button>
               )}              <Button
-                variant="outlined"
                 color="primary"
                 fullWidth
                 onClick={() => location.href = `/profile`}
@@ -271,54 +268,27 @@ export default function CampaignHome() {
                               {statusIcon}
                             </span>
                           </Tooltip>
-                        </div>
-                          {w.status === 'needs_update' ? (
+                        </div>                          {w.status === 'needs_update' ? (
                           <Button
                             variant="contained"
                             color="warning"
                             size="small"
-                            sx={{ 
-                              fontWeight: 700, 
-                              letterSpacing: 0.5, 
-                              boxShadow: '0 1px 4px #4f010122', 
-                              px: 1.5, 
-                              py: 0.4, 
-                              fontSize: 13, 
-                              textTransform: 'uppercase', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 1,
-                              width: '100%'
-                            }}
                             component={Link}
                             href={`/campaign/${campaignId}/battle?warband_id=${w.id}`}
+                            sx={{ width: '100%' }}
                           >
                             <span style={{fontSize:18,marginRight:6}}>🛠️</span> Оновити ростер
-                          </Button>
-                        ) : (
+                          </Button>) : (
                           <Button
                             variant="contained"
-                            color="secondary"
+                            color="warning"
                             size="small"
-                            sx={{ 
-                              fontWeight: 700, 
-                              letterSpacing: 0.5, 
-                              boxShadow: '0 1px 4px #4f010122', 
-                              px: 1.5, 
-                              py: 0.4, 
-                              fontSize: 13, 
-                              textTransform: 'uppercase', 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 1,
-                              width: '100%'
-                            }}
                             component={Link}
                             href={`/campaign/${campaignId}/battle?warband_id=${w.id}`}
                             disabled={w.status === 'checking' || w.status === 'needs_update'}
                             title={w.status === 'checking' ? 'Варбанди на перевірці. Дочекайтесь схвалення.' : w.status === 'needs_update' ? 'Варбанди потребують оновлення ростеру. Оновіть ростер для активації.' : ''}
-                          >
-                            <img
+                            sx={{ width: '100%' }}
+                          >                            <img
                               src="/swords.png"
                               alt="Схрещені мечі"
                               style={{
@@ -326,7 +296,7 @@ export default function CampaignHome() {
                                 height: 18,
                                 marginRight: 6,
                                 verticalAlign: 'middle',
-                                filter: w.status === 'checking' || w.status === 'needs_update' ? 'grayscale(1) brightness(1.2) opacity(.5) drop-shadow(0 1px 2px #0003)' : 'drop-shadow(0 1px 2px #0003)'
+                                filter: w.status === 'checking' || w.status === 'needs_update' ? 'grayscale(1) brightness(1.2) opacity(.5)' : undefined
                               }}
                             /> До бою!
                           </Button>
@@ -337,7 +307,6 @@ export default function CampaignHome() {
                 </div>
               )}
               {/* Кнопка таблиці результатів */}              <Button
-                variant="outlined"
                 color="primary"
                 fullWidth
                 component={Link}
@@ -345,9 +314,7 @@ export default function CampaignHome() {
                 sx={{ mb: { xs: 0.5, sm: 0.8 }, py: { xs: 1, sm: 1.2 } }}
               >
                 Переглянути гравців кампанії
-              </Button>
-              <Button
-                variant="outlined"
+              </Button>              <Button
                 color="primary"
                 fullWidth
                 component={Link}
@@ -356,7 +323,7 @@ export default function CampaignHome() {
               >
                 Таблиця результатів
               </Button>
-              {/* Кнопка подати ростер тільки якщо не більше 1 не видаленої варбанди */}              {user && (user.warbands?.filter((w: any) => w.status !== 'deleted').length ?? 0) < 2 && (
+              {/* Кнопка подати ростер тільки якщо не досяг ліміту варбанд */}              {user && campaign && (user.warbands?.filter((w: any) => w.status !== 'deleted').length ?? 0) < (campaign.warband_limit || 2) && (
                 <Button
                   variant="contained"
                   color="primary"
@@ -389,7 +356,6 @@ export default function CampaignHome() {
                 Увійти
               </Button>
               <Button 
-                variant="outlined" 
                 color="secondary" 
                 fullWidth 
                 onClick={() => location.href = `/campaign/${campaignId}/register`}

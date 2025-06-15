@@ -27,11 +27,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     if (!userCampaign) {
       return NextResponse.json({ error: 'Not authorized for this campaign' }, { status: 403 });
-    }
-
-    // Check if campaign exists
+    }    // Check if campaign exists
     const campaign = await prisma.campaigns.findUnique({
-      where: { id: campaignId }
+      where: { id: campaignId },
+      select: {
+        id: true,
+        name: true,
+        warband_limit: true,
+      }
     });
 
     if (!campaign) {
@@ -141,7 +144,25 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         success: true
       });    } else {
       // Create a new warband
-        // Check if warband with this name already exists for this player in this campaign
+      
+      // Check warband limit for this campaign
+      const currentWarbandCount = await prisma.warbands.count({
+        where: {
+          player_id: authResult.userId,
+          campaign_id: campaignId,
+          status: {
+            not: 'deleted'
+          }
+        }
+      });
+
+      if (currentWarbandCount >= campaign.warband_limit) {
+        return NextResponse.json({ 
+          error: `Ви досягли ліміту варбанд для цієї кампанії (${campaign.warband_limit}). Видаліть одну з існуючих варбанд, щоб створити нову.` 
+        }, { status: 400 });
+      }
+
+      // Check if warband with this name already exists for this player in this campaign
       const existingWarband = await prisma.warbands.findFirst({
         where: {
           player_id: authResult.userId,

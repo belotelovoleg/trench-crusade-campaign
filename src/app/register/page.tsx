@@ -88,7 +88,7 @@ export default function RegisterPage() {
               label="Логін"
               name="login"
               margin="normal"
-              variant="outlined"
+              
               onChange={handleChange}
               error={!!errors.login}
               helperText={errors.login}
@@ -100,7 +100,7 @@ export default function RegisterPage() {
               label="Пароль"
               name="password"
               margin="normal"
-              variant="outlined"
+              
               onChange={handleChange}
               error={!!errors.password}
               helperText={errors.password}
@@ -111,7 +111,7 @@ export default function RegisterPage() {
               label="Ім'я"
               name="name"
               margin="normal"
-              variant="outlined"
+              
               onChange={handleChange}
               className={styles.input}
             />
@@ -120,7 +120,7 @@ export default function RegisterPage() {
               label="Email"
               name="email"
               margin="normal"
-              variant="outlined"
+              
               onChange={handleChange}
               error={!!errors.email}
               helperText={errors.email}

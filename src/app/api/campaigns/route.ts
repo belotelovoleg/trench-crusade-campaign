@@ -66,25 +66,27 @@ export async function POST(request: NextRequest) {
   }
   console.log("Super admin check passed for user:", authResult.userId, "is_super_admin:", authResult.is_super_admin);
 
-  try {
-    // Check content type to determine how to parse the request
+  try {    // Check content type to determine how to parse the request
     const contentType = request.headers.get('content-type') || '';
     
     let name: string;
     let description: string | null = null;
     let imageBase64: string | null = null;
+    let warband_limit: number = 2;
     
     if (contentType.includes('application/json')) {
       // Handle JSON request
       const json = await request.json();
       name = json.name;
       description = json.description || null;
+      warband_limit = Math.max(1, Math.min(10, parseInt(json.warband_limit) || 2));
       // No image handling for JSON requests
     } else if (contentType.includes('multipart/form-data')) {
       // Handle multipart form data (for image uploads)
       const formData = await request.formData();
       name = formData.get('name') as string;
       description = formData.get('description') as string || null;
+      warband_limit = Math.max(1, Math.min(10, parseInt(formData.get('warband_limit') as string) || 2));
       
       const imageFile = formData.get('image') as File;
       if (imageFile && imageFile.size > 0) {
@@ -92,7 +94,7 @@ export async function POST(request: NextRequest) {
         const buffer = Buffer.from(arrayBuffer);
         imageBase64 = `data:${imageFile.type};base64,${buffer.toString('base64')}`;
       }
-    } else {
+    }else {
       return NextResponse.json(
         { error: 'Unsupported content type. Use application/json or multipart/form-data' },
         { status: 400 }
@@ -101,13 +103,12 @@ export async function POST(request: NextRequest) {
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Campaign name is required' }, { status: 400 });
-    }
-
-    const campaign = await prisma.campaigns.create({
+    }    const campaign = await prisma.campaigns.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,
         image: imageBase64,
+        warband_limit: warband_limit,
       },
     });
 

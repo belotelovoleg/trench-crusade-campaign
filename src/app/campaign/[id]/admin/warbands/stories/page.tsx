@@ -140,7 +140,7 @@ function WarbandStoriesPageInner() {
           {saving ? "Збереження..." : "Зберегти"}
         </Button>
         <Button 
-          variant="outlined" 
+           
           onClick={() => router.push(`/campaign/${campaignId}/admin/warbands`)} 
           sx={{ ml: 2 }}
         >

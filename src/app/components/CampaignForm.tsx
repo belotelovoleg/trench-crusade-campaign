@@ -22,21 +22,21 @@ import styles from '../page.module.css';
 
 interface CampaignFormProps {
   mode: 'create' | 'edit';
-  campaignId?: string;
-  initialData?: {
+  campaignId?: string;  initialData?: {
     name: string;
     description: string;
     image_url?: string;
+    warband_limit?: number;
   };
 }
 
 export default function CampaignForm({ mode, campaignId, initialData }: CampaignFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [formData, setFormData] = useState({
+  const [error, setError] = useState('');  const [formData, setFormData] = useState({
     name: initialData?.name || '',
-    description: initialData?.description || ''
+    description: initialData?.description || '',
+    warband_limit: initialData?.warband_limit || 2
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(initialData?.image_url || null);
@@ -62,10 +62,10 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
       const method = mode === 'create' ? 'POST' : 'PATCH';
 
       // Use FormData if we have an image, otherwise use JSON
-      if (imageFile) {
-        const formDataToSend = new FormData();
+      if (imageFile) {        const formDataToSend = new FormData();
         formDataToSend.append('name', formData.name);
         formDataToSend.append('description', formData.description);
+        formDataToSend.append('warband_limit', formData.warband_limit.toString());
         formDataToSend.append('image', imageFile);
 
         const response = await fetch(endpoint, {
@@ -86,10 +86,10 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
           method,
           headers: {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
+          },          body: JSON.stringify({
             name: formData.name,
             description: formData.description,
+            warband_limit: formData.warband_limit,
           }),
         });
 
@@ -239,9 +239,7 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
                 }
               }
             }}
-          />
-
-          <TextField
+          />          <TextField
             fullWidth
             label="Опис кампанії"
             value={formData.description}
@@ -251,6 +249,30 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
             rows={4}
             disabled={loading}
             placeholder="Опишіть вашу кампанію, її історію та правила..."
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                }
+              }
+            }}
+          />
+
+          <TextField
+            fullWidth
+            label="Ліміт варбанд на гравця"
+            type="number"
+            value={formData.warband_limit}
+            onChange={(e) => {
+              const value = parseInt(e.target.value) || 1;
+              const clampedValue = Math.max(1, Math.min(10, value));
+              setFormData(prev => ({ ...prev, warband_limit: clampedValue }));
+            }}
+            margin="normal"
+            disabled={loading}
+            inputProps={{ min: 1, max: 10 }}
+            helperText="Кількість варбанд, яку може мати один гравець у кампанії (1-10)"
             sx={{
               '& .MuiOutlinedInput-root': {
                 backgroundColor: 'rgba(255,255,255,0.8)',
@@ -298,7 +320,7 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
                     <Button 
                       size="small" 
-                      variant="outlined"
+                      
                       color="error"
                       onClick={handleRemoveImage}
                       disabled={loading}
@@ -308,7 +330,7 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
                     </Button>
                     <Button 
                       size="small" 
-                      variant="outlined"
+                      
                       onClick={() => fileInputRef.current?.click()}
                       disabled={loading}
                       sx={{ minWidth: 'auto', px: 2 }}
@@ -330,7 +352,7 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
               
               {!previewUrl && (
                 <Button
-                  variant="outlined"
+                  
                   onClick={() => fileInputRef.current?.click()}
                   disabled={loading}
                   fullWidth
@@ -395,7 +417,7 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
             </Button>
             
             <Button
-              variant="outlined"
+              
               onClick={() => router.back()}
               disabled={loading}
               fullWidth
@@ -508,7 +530,7 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
             <Button
               onClick={handleCropCancel}
               disabled={loading}
-              variant="outlined"
+              
               fullWidth
               sx={{ 
                 py: { xs: 1.5, sm: 1 },

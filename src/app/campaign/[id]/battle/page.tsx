@@ -320,7 +320,7 @@ function BattlePageContent() {
             </span>
           </Tooltip>
           {oppRoster && oppRoster.file_url && (
-            <Button size="small" variant="outlined" sx={{ml:2}} onClick={()=>{
+            <Button size="small"  sx={{ml:2}} onClick={()=>{
               const link = document.createElement('a');
               link.href = oppRoster.file_url;
               link.download = `roster_${oppWarband.name}.json`;

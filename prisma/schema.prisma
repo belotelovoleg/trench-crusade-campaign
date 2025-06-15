@@ -16,6 +16,7 @@ model campaigns {
   created_at       DateTime         @default(now())
   updated_at       DateTime         @default(now()) @updatedAt
   is_active        Boolean          @default(true)
+  warband_limit    Int              @default(2)
   about_campaigns  about_campaign[]
   games            games[]
   players_campaigns players_campaigns[]

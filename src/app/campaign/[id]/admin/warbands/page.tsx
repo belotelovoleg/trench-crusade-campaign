@@ -340,7 +340,7 @@ export default function CampaignWarbandsAdmin() {
                       </FormControl>
                       <Tooltip title="Завантажити ростер" arrow>
                         <span>
-                          <Button                            variant="outlined"
+                          <Button                            
                             color="primary"
                             size="small"
                             sx={{ minWidth: 40, padding: '4px 8px' }}
@@ -375,7 +375,7 @@ export default function CampaignWarbandsAdmin() {
                       </Tooltip>
                       <Tooltip title="Замінити ростер" arrow>
                         <span>
-                          <Button                            variant="outlined"
+                          <Button                            
                             color="secondary"
                             size="small"
                             sx={{ minWidth: 40, padding: '4px 8px' }}
@@ -441,7 +441,7 @@ export default function CampaignWarbandsAdmin() {
                       </Tooltip>
                       <Tooltip title="Видалити ростер" arrow>
                         <span>
-                          <Button                            variant="outlined"
+                          <Button                            
                             color="error"
                             size="small"
                             sx={{ minWidth: 40, padding: '4px 8px' }}                            disabled={!selectedRosterId[w.id]}                            onClick={() => {
@@ -475,7 +475,7 @@ export default function CampaignWarbandsAdmin() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Button variant="outlined" color="primary" onClick={() => router.push(`/campaign/${campaignId}/admin/warbands/stories?id=${w.id}`)}>
+                    <Button  color="primary" onClick={() => router.push(`/campaign/${campaignId}/admin/warbands/stories?id=${w.id}`)}>
                       Оповідання
                     </Button>
                   </TableCell>
@@ -509,7 +509,7 @@ export default function CampaignWarbandsAdmin() {
             <DialogContentText>Видалити цю варбанду разом з усіма її ростерами та файлами? Це незворотньо.</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={()=>setDeleteDialog({open:false,warbandId:null})} color="inherit" variant="outlined">Скасувати</Button>
+            <Button onClick={()=>setDeleteDialog({open:false,warbandId:null})} color="inherit" >Скасувати</Button>
             <Button color="error" variant="contained" onClick={()=>handleDelete(deleteDialog.warbandId!)}>Видалити</Button>
           </DialogActions>
         </Dialog>
@@ -527,7 +527,7 @@ export default function CampaignWarbandsAdmin() {
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={()=>setDeleteRosterDialog({open:false})} color="inherit" variant="outlined">Скасувати</Button>            <Button color="error" variant="contained" onClick={async()=>{
+            <Button onClick={()=>setDeleteRosterDialog({open:false})} color="inherit" >Скасувати</Button>            <Button color="error" variant="contained" onClick={async()=>{
               if (!deleteRosterDialog.roster?.id) return;
               await fetch(`/api/campaigns/${campaignId}/rosters/${deleteRosterDialog.roster.id}/delete`, { method: 'POST' });
               

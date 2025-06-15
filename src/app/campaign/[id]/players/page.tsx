@@ -239,13 +239,11 @@ export default function PlayersPage() {
                 <Typography variant="h6" sx={{ fontSize: "1rem", fontWeight: 600 }}>
                   {player.name || player.login}
                 </Typography>
-              </Box>
-              {player.notes && (
+              </Box>              {player.notes && (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   size="small"
                   startIcon={<InfoIcon />}
-                  sx={{ minHeight: 32, fontSize: "0.75rem" }}
                   onClick={() =>
                     setNotesDialog({
                       open: true,
@@ -309,8 +307,7 @@ export default function PlayersPage() {
                       </Box>
 
                       {wb.rosters && wb.rosters.length > 0 && (
-                        <Box>                          {rosterCount > 0 && (
-                            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+                        <Box>                          {rosterCount > 0 && (                            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
                               <Slider
                                 min={0}
                                 max={Math.max(0, rosterCount - 1)}
@@ -327,11 +324,6 @@ export default function PlayersPage() {
                                 }}
                                 disabled={rosterCount <= 1}
                               />
-                              {rosterCount > 1 && (
-                                <Typography variant="caption" sx={{ ml: 1, alignSelf: 'center' }}>
-                                  Гра {value + 1}
-                                </Typography>
-                              )}
                             </Box>
                           )}{rosterToShow && (
                             <Box
@@ -377,8 +369,7 @@ export default function PlayersPage() {
                                   <Typography variant="caption" sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
                                     Гра: {rosterToShow.game_number || value + 1}
                                   </Typography>
-                                )}
-                                <Tooltip title="Завантажити ростер" arrow>
+                                )}                                <Tooltip title="Завантажити ростер" arrow>
                                   <Button
                                     size="small"
                                     variant="contained"
@@ -389,15 +380,8 @@ export default function PlayersPage() {
                                         "_blank"
                                       )
                                     }
-                                    sx={{
-                                      minWidth: 32,
-                                      width: 32,
-                                      height: 24,
-                                      p: 0,
-                                      borderRadius: "6px",
-                                    }}
                                   >
-                                    <DownloadIcon sx={{ fontSize: "1rem" }} />
+                                    <DownloadIcon />
                                   </Button>
                                 </Tooltip>
                               </Box>
@@ -423,13 +407,13 @@ export default function PlayersPage() {
           <Typography variant="body1" sx={{ whiteSpace: "pre-line" }}>
             {notesDialog.notes}
           </Typography>
-        </DialogContent>
-        <DialogActions>
+        </DialogContent>        <DialogActions>
           <Button
             onClick={() => setNotesDialog({ open: false, notes: "", player: "" })}
           >
             Закрити
-          </Button>        </DialogActions>
+          </Button>
+        </DialogActions>
       </Dialog>
       </Box>
     </div>

@@ -897,7 +897,7 @@ const GameResultEdit: React.FC<GameResultEditProps> = ({
           </Box>
         </Box>
       </DialogContent>      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Button onClick={onClose} variant="outlined" color="inherit">
+        <Button onClick={onClose}  color="inherit">
           Закрити
         </Button>
         

@@ -182,12 +182,11 @@ export default function TablePage() {
       return <TableCell key={i}></TableCell>;
     });
   };
-
   const renderTableRow = (w: Warband) => {
     return (
       <TableRow key={w.id}>
-        <TableCell>{w.name}</TableCell>
-        <TableCell>
+        <TableCell sx={{ padding: '6px 8px !important' }}>{w.name}</TableCell>
+        <TableCell sx={{ padding: '6px 8px !important', textAlign: 'center' }}>
           {w.catalogue_name && FACTION_AVATARS[w.catalogue_name] ? (
             <Tooltip title={w.catalogue_name} arrow>
               <img
@@ -198,12 +197,12 @@ export default function TablePage() {
             </Tooltip>
           ) : null}
         </TableCell>
-        <TableCell>{w.players?.name || ''}</TableCell>
-        <TableCell>
+        <TableCell sx={{ padding: '6px 8px !important' }}>{w.players?.name || ''}</TableCell>
+        <TableCell sx={{ padding: '6px 8px !important', textAlign: 'center' }}>
           {w.players?.avatar_url ? (
-            <Avatar src={`/api/avatar/${w.players.avatar_url}`} alt={w.players.name} />
+            <Avatar src={`/api/avatar/${w.players.avatar_url}`} alt={w.players.name} sx={{ width: 32, height: 32 }} />
           ) : (
-            <Avatar src="/api/avatar/default" alt={w.players?.name} />
+            <Avatar src="/api/avatar/default" alt={w.players?.name} sx={{ width: 32, height: 32 }} />
           )}
         </TableCell>
         <TableCell style={{ fontWeight: 700 }}>{w.total_vp ?? 0}</TableCell>
@@ -231,15 +230,38 @@ export default function TablePage() {
               Жодна битва ще не сколихнула окопи цієї кампанії.<br/>
               Воїни чекають на перший заклик до бою...
             </Typography>
-          ) : (
-            <TableContainer component={Paper}>
-              <Table size="small">
-                <TableHead>
+          ) : (            <TableContainer component={Paper}>
+              <Table size="small" sx={{
+                '& .MuiTableCell-root': {
+                  '&:nth-of-type(-n+4)': {
+                    padding: '6px 8px', // Reduced padding for first 4 columns
+                    maxWidth: 'fit-content',
+                  },
+                  '&:nth-of-type(1)': { // Warband column
+                    minWidth: '120px',
+                    maxWidth: '150px',
+                  },
+                  '&:nth-of-type(2)': { // Faction column
+                    minWidth: '60px',
+                    maxWidth: '80px',
+                    textAlign: 'center',
+                  },
+                  '&:nth-of-type(3)': { // Player column
+                    minWidth: '100px',
+                    maxWidth: '120px',
+                  },
+                  '&:nth-of-type(4)': { // Avatar column
+                    minWidth: '60px',
+                    maxWidth: '80px',
+                    textAlign: 'center',
+                  },
+                }
+              }}>                <TableHead>
                   <TableRow>
-                    <TableCell>Warband</TableCell>
-                    <TableCell>Фракція</TableCell>
-                    <TableCell>Гравець</TableCell>
-                    <TableCell>Аватар</TableCell>
+                    <TableCell sx={{ padding: '6px 8px !important', fontWeight: 'bold' }}>Warband</TableCell>
+                    <TableCell sx={{ padding: '6px 8px !important', fontWeight: 'bold', textAlign: 'center' }}>Фракція</TableCell>
+                    <TableCell sx={{ padding: '6px 8px !important', fontWeight: 'bold' }}>Гравець</TableCell>
+                    <TableCell sx={{ padding: '6px 8px !important', fontWeight: 'bold', textAlign: 'center' }}>Аватар</TableCell>
                     <TableCell
                       style={{ cursor: 'pointer', fontWeight: 700 }}
                       onClick={() => setSortByVP((v) => !v)}

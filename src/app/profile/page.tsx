@@ -201,7 +201,7 @@ export default function ProfilePage() {
                 '/api/avatar/default'} 
               className={styles.profileAvatar}
             />
-            <Button variant="outlined" component="label" disabled={saving}>
+            <Button  component="label" disabled={saving}>
               Завантажити аватар
               <input type="file" accept="image/*" hidden onChange={handleAvatarChange} />
             </Button>
@@ -298,7 +298,7 @@ export default function ProfilePage() {
               maxRows={10}
               fullWidth
               helperText="Вкажіть, коли і де ви можете зіграти гру цієї кампанії. Це поле бачать інші гравці."
-              variant="outlined"
+              
               sx={{mb:2}}
             />            <Button variant="contained" color="primary" onClick={handleSaveAll} disabled={saving} fullWidth>
               Зберегти зміни

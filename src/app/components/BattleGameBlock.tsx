@@ -142,7 +142,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
           <CircularProgress size={20} />
         ) : roster ? (
           <>
-            <Button variant="outlined" onClick={handleDownloadRoster} sx={{mb:1}}>
+            <Button  onClick={handleDownloadRoster} sx={{mb:1}}>
               Скачати JSON
             </Button>
             {/* Коротка інфа про ростер (кількість моделей і загальна ціна в дукатах) */}
@@ -269,7 +269,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
               {isAdmin && currentGame.status !== 'planned' && (
                 <Button 
                   size="small" 
-                  variant="outlined" 
+                   
                   color="warning" 
                   sx={{mt:1}}
                   onClick={() => {
@@ -306,7 +306,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                     <>
                       <Typography color="text.secondary" sx={{mt:2}}>Ви підтвердили результат. Очікуємо на опонента.</Typography>
                       <Box sx={{display:'flex',gap:2,mt:1}}>                        <Button 
-                          variant="outlined" 
+                           
                           color="primary" 
                           size="small"
                           onClick={() => {
@@ -324,7 +324,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
               {currentGame.status === 'planned' && (
                 <Button 
                   size="small" 
-                  variant="outlined" 
+                   
                   color="error" 
                   sx={{mt:2}}
                   onClick={() => handleCancelGame(currentGame)}

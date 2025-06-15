@@ -99,19 +99,25 @@ export async function PATCH(
 
     // Parse the request data
     const contentType = request.headers.get('content-type') || '';
-    
-    let name: string;
+      let name: string;
     let description: string | null = null;
     let imageBase64: string | null = null;
+    let warband_limit: number | undefined;
     
     if (contentType.includes('application/json')) {
       const json = await request.json();
       name = json.name;
       description = json.description || null;
+      if (json.warband_limit !== undefined) {
+        warband_limit = Math.max(1, Math.min(10, parseInt(json.warband_limit) || 2));
+      }
     } else if (contentType.includes('multipart/form-data')) {
       const formData = await request.formData();
       name = formData.get('name') as string;
       description = formData.get('description') as string || null;
+      if (formData.get('warband_limit')) {
+        warband_limit = Math.max(1, Math.min(10, parseInt(formData.get('warband_limit') as string) || 2));
+      }
       
       const imageFile = formData.get('image') as File;
       if (imageFile && imageFile.size > 0) {
@@ -119,7 +125,7 @@ export async function PATCH(
         const buffer = Buffer.from(arrayBuffer);
         imageBase64 = `data:${imageFile.type};base64,${buffer.toString('base64')}`;
       }
-    } else {
+    }else {
       return NextResponse.json(
         { error: 'Unsupported content type' },
         { status: 400 }
@@ -128,9 +134,7 @@ export async function PATCH(
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Campaign name is required' }, { status: 400 });
-    }
-
-    // Update campaign
+    }    // Update campaign
     const updateData: any = {
       name: name.trim(),
       description: description?.trim() || null,
@@ -140,6 +144,11 @@ export async function PATCH(
     // Only update image if a new one was provided
     if (imageBase64) {
       updateData.image = imageBase64;
+    }
+
+    // Only update warband_limit if provided
+    if (warband_limit !== undefined) {
+      updateData.warband_limit = warband_limit;
     }
 
     const updatedCampaign = await prisma.campaigns.update({

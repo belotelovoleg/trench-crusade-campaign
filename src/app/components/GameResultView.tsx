@@ -266,7 +266,7 @@ const GameResultView: React.FC<GameResultViewProps> = ({
           </Box>
         </Box>
       </DialogContent>      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-        <Button onClick={onClose} variant="outlined" color="inherit">
+        <Button onClick={onClose}  color="inherit">
           Закрити
         </Button>
         
@@ -274,7 +274,7 @@ const GameResultView: React.FC<GameResultViewProps> = ({
           <>
             <Button 
               onClick={() => onAction('edit')} 
-              variant="outlined" 
+               
               color="primary" 
               startIcon={<EditIcon />}
             >
@@ -290,7 +290,7 @@ const GameResultView: React.FC<GameResultViewProps> = ({
             </Button>
             <Button 
               onClick={() => onAction('reject')} 
-              variant="outlined" 
+               
               color="error" 
               startIcon={<ClearIcon />}
             >
