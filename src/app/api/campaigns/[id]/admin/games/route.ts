@@ -31,9 +31,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 
     if (!playerCampaign?.is_admin) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
-    }
-
-    // Get games for this campaign only
+    }    // Get games for this campaign only
     const games = await prisma.games.findMany({
       where: {
         OR: [
@@ -50,9 +48,35 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         ],
       },
       orderBy: { id: 'desc' },
-      include: {
+      select: {
+        id: true,
+        campaign_id: true,
+        warband_1_id: true,
+        warband_2_id: true,
+        warband_1_roster_id: true,
+        warband_2_roster_id: true,
+        status: true,
+        vp_1: true,
+        vp_2: true,
+        gp_1: true,
+        gp_2: true,
+        idt: true,
+        udt: true,
+        player1_injuries: true,
+        player2_injuries: true,
+        player1_skillAdvancements: true,
+        player2_skillAdvancements: true,
+        player1_becomesElite: true,
+        player2_becomesElite: true,
+        player1_explorationDice: true,
+        player2_explorationDice: true,
+        player1_isApprovedResult: true,
+        player2_isApprovedResult: true,
         warbands_games_warband_1_idTowarbands: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            catalogue_name: true,
             players: {
               select: {
                 id: true,
@@ -63,7 +87,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
           },
         },
         warbands_games_warband_2_idTowarbands: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            catalogue_name: true,
             players: {
               select: {
                 id: true,

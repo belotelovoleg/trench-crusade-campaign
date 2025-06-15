@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Paper, Typography, CircularProgress, Button, Avatar, Box, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
 import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
-import GameResultsDialog from './GameResultsDialog';
+import GameResultView from './GameResultView';
+import GameResultEdit from './GameResultEdit';
 import FACTION_AVATARS from '../factionAvatars';
 
 interface BattleGameBlockProps {
@@ -19,11 +20,11 @@ interface BattleGameBlockProps {
   readyLoading?: boolean;
   readyState?: 'none'|'waiting'|'active';
   lastReadyGameId?: number|null;
-  currentUserId?: number;
-  handleApproveResult: (gameId: number) => void;
+  currentUserId?: number;  handleApproveResult: (gameId: number) => void;
   handleRejectResult: (gameId: number) => void;
   warband?: any; // Add warband prop to access status
   campaignId?: string; // Add campaignId prop for navigation
+  isAdmin?: boolean; // Add isAdmin prop for admin actions
 }
 
 const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
@@ -42,12 +43,66 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
   lastReadyGameId,
   currentUserId,
   warband,
-  campaignId
-}) => {
-  const [resultsDialogOpen, setResultsDialogOpen] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [editResultsDialogOpen, setEditResultsDialogOpen] = useState(false);
-  const [viewResultsDialogOpen, setViewResultsDialogOpen] = useState(false);
+  campaignId,
+  isAdmin = false
+}) => {const [gameResultViewOpen, setGameResultViewOpen] = useState(false);  const [gameResultEditOpen, setGameResultEditOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'view' | 'approve' | 'ownResult'>('view');
+  const [isAdminEdit, setIsAdminEdit] = useState(false);
+
+  // Helper function to render a player row
+  const renderPlayerRow = (warband: any, vp: number, gp: number) => {
+    const player = warband?.players;
+    const factionName = warband?.catalogue_name;
+    const factionAvatar = factionName && FACTION_AVATARS[factionName];
+    
+    return (
+      <Box sx={{ display:'flex', gap:2, alignItems:'center' }}>
+        {/* Faction avatar */}
+        {factionAvatar && (
+          <Tooltip title={factionName} arrow>
+            <img 
+              src={factionAvatar} 
+              alt={factionName} 
+              style={{width:32,height:32,borderRadius:'50%',objectFit:'cover'}} 
+            />
+          </Tooltip>
+        )}
+        {/* Player avatar */}
+        <Avatar 
+          src={player?.avatar_url ? `/api/avatar/${player.avatar_url}` : '/api/avatar/default'} 
+          sx={{ width: 32, height: 32 }}
+        />
+        {/* Player info */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0, flex: 1 }}>
+          <Typography variant="body2" sx={{ fontWeight: 'bold', wordBreak: 'break-word' }}>
+            {warband?.name}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            ({player?.name})
+          </Typography>
+        </Box>
+        {/* Scores */}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <Tooltip title="Переможні бали (VP)" arrow>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <StarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                {vp}
+              </Typography>
+            </Box>
+          </Tooltip>
+          <Tooltip title="Слава (GP)" arrow>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <MilitaryTechIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
+              <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                {gp}
+              </Typography>
+            </Box>
+          </Tooltip>
+        </Box>
+      </Box>
+    );
+  };
   const [confirmMode, setConfirmMode] = useState<'approve'|'reject'|null>(null);
 
   // Determine readiness state for UI
@@ -120,73 +175,11 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                 </Typography>
               </Typography>
 
+              {/* Single clickable container for entire game result */}
               <Box 
                 sx={{
-                  display:'flex',
-                  gap:2,
-                  alignItems:'center',
-                  mb:1,
-                  p:1,
-                  borderRadius:1,
-                  cursor: 'pointer',
-                  border: '1px solid transparent',
-                  '&:hover': { 
-                    backgroundColor: 'rgba(0,0,0,0.04)',
-                    border: '1px solid rgba(0,0,0,0.1)'
-                  }
-                }}                
-                onClick={() => setResultsDialogOpen(true)}
-              >
-                {/* Player 1 faction avatar */}
-                {currentGame.warbands_games_warband_1_idTowarbands.catalogue_name &&
-                 FACTION_AVATARS[currentGame.warbands_games_warband_1_idTowarbands.catalogue_name] && (
-                  <Tooltip title={currentGame.warbands_games_warband_1_idTowarbands.catalogue_name} arrow>
-                    <img 
-                      src={FACTION_AVATARS[currentGame.warbands_games_warband_1_idTowarbands.catalogue_name]} 
-                      alt={currentGame.warbands_games_warband_1_idTowarbands.catalogue_name} 
-                      style={{width:32,height:32,borderRadius:'50%',objectFit:'cover'}} 
-                    />
-                  </Tooltip>
-                )}
-                {/* Player 1 avatar */}
-                <Avatar 
-                  src={currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url ? 
-                    `/api/avatar/${currentGame.warbands_games_warband_1_idTowarbands.players.avatar_url}` : 
-                    '/api/avatar/default'} 
-                  sx={{ width: 32, height: 32 }}
-                />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0, flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', wordBreak: 'break-word' }}>
-                    {currentGame.warbands_games_warband_1_idTowarbands.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    ({currentGame.warbands_games_warband_1_idTowarbands.players.name})
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <Tooltip title="Переможні бали (VP)" arrow>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <StarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {currentGame.vp_1}
-                      </Typography>
-                    </Box>
-                  </Tooltip>                  <Tooltip title="Слава (GP)" arrow>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <MilitaryTechIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {currentGame.gp_1}
-                      </Typography>
-                    </Box>
-                  </Tooltip>
-                </Box>
-              </Box>              <Box 
-                sx={{
-                  display:'flex',
-                  gap:2,
-                  alignItems:'center',
-                  p:1,
-                  borderRadius:1,
+                  p: 1,
+                  borderRadius: 1,
                   cursor: 'pointer',
                   border: '1px solid transparent',
                   '&:hover': { 
@@ -194,56 +187,26 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                     border: '1px solid rgba(0,0,0,0.1)'
                   }
                 }}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  console.log('Clicked on result - opening dialog');
-                  setResultsDialogOpen(true);
+                onClick={() => {
+                  setViewMode('view');
+                  setGameResultViewOpen(true);
                 }}
               >
-                {/* Player 2 faction avatar */}
-                {currentGame.warbands_games_warband_2_idTowarbands.catalogue_name && 
-                 FACTION_AVATARS[currentGame.warbands_games_warband_2_idTowarbands.catalogue_name] && (
-                  <Tooltip title={currentGame.warbands_games_warband_2_idTowarbands.catalogue_name} arrow>
-                    <img 
-                      src={FACTION_AVATARS[currentGame.warbands_games_warband_2_idTowarbands.catalogue_name]} 
-                      alt={currentGame.warbands_games_warband_2_idTowarbands.catalogue_name} 
-                      style={{width:32,height:32,borderRadius:'50%',objectFit:'cover'}} 
-                    />
-                  </Tooltip>
+                {/* Player 1 */}
+                <Box sx={{ mb: 1 }}>
+                  {renderPlayerRow(
+                    currentGame.warbands_games_warband_1_idTowarbands,
+                    currentGame.vp_1,
+                    currentGame.gp_1
+                  )}
+                </Box>
+
+                {/* Player 2 */}
+                {renderPlayerRow(
+                  currentGame.warbands_games_warband_2_idTowarbands,
+                  currentGame.vp_2,
+                  currentGame.gp_2
                 )}
-                {/* Player 2 avatar */}
-                <Avatar 
-                  src={currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url ? 
-                    `/api/avatar/${currentGame.warbands_games_warband_2_idTowarbands.players.avatar_url}` : 
-                    '/api/avatar/default'} 
-                  sx={{ width: 32, height: 32 }}
-                />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0, flex: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', wordBreak: 'break-word' }}>
-                    {currentGame.warbands_games_warband_2_idTowarbands.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    ({currentGame.warbands_games_warband_2_idTowarbands.players.name})
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                  <Tooltip title="Переможні бали (VP)" arrow>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <StarIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {currentGame.vp_2}
-                      </Typography>
-                    </Box>
-                  </Tooltip>                  <Tooltip title="Слава (GP)" arrow>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <MilitaryTechIcon sx={{ fontSize: 16, color: 'secondary.main' }} />
-                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                        {currentGame.gp_2}
-                      </Typography>
-                    </Box>
-                  </Tooltip>
-                </Box>
               </Box>
             </>
           ) : (
@@ -292,21 +255,42 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                 <Typography color="success.main" sx={{mt:1}}>
                   Гра почалася!
                 </Typography>
-              )}
-              {currentGame.status === 'active' && (
+              )}              {currentGame.status === 'active' && (
                 <Button size="small" variant="contained" color="primary" sx={{mt:2}}
-                  onClick={() => setResultsDialogOpen(true)}
-                >
+                  onClick={() => {
+                    setIsAdminEdit(false);
+                    setGameResultEditOpen(true);
+                  }}                >
                   Завершити гру (ввести результати)
                 </Button>
-              )}              {/* Додаємо блок для pending_approval */}
+              )}
+
+              {/* Admin edit button - available for any status except 'planned' */}
+              {isAdmin && currentGame.status !== 'planned' && (
+                <Button 
+                  size="small" 
+                  variant="outlined" 
+                  color="warning" 
+                  sx={{mt:1}}
+                  onClick={() => {
+                    setIsAdminEdit(true);
+                    setGameResultEditOpen(true);
+                  }}
+                >
+                  🛡️ Редагувати (адмін)
+                </Button>
+              )}
+
+              {/* Додаємо блок для pending_approval */}
               {currentGame.status === 'pending_approval' && (
                 <>
                   <Typography color="warning.main" sx={{mt:2}}>Очікується підтвердження результату обома гравцями</Typography>
                   {/* Якщо я ще не підтвердив */}
                   {((isPlayer1 && !currentGame.player1_isApprovedResult) || (!isPlayer1 && !currentGame.player2_isApprovedResult)) && (
-                    <Box sx={{display:'flex',gap:2,mt:2}}>
-                      <Button variant="contained" color="success" onClick={() => setConfirmDialogOpen(true)}>
+                    <Box sx={{display:'flex',gap:2,mt:2}}>                      <Button variant="contained" color="success" onClick={() => {
+                        setViewMode('approve');
+                        setGameResultViewOpen(true);
+                      }}>
                         Подивитись результат
                       </Button>
                     </Box>
@@ -317,59 +301,26 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                     <Typography color="info.main" sx={{mt:1}}>
                       Опонент вніс зміни до результату гри. Будь ласка, перегляньте та підтвердіть новий результат.
                     </Typography>
-                  )}
-                  {/* Якщо я вже підтвердив */}
+                  )}                  {/* Якщо я вже підтвердив */}
                   {((isPlayer1 && currentGame.player1_isApprovedResult) || (!isPlayer1 && currentGame.player2_isApprovedResult)) && (
-                    <Typography color="text.secondary" sx={{mt:2}}>Ви підтвердили результат. Очікуємо на опонента.</Typography>
-                  )}                  {/* Діалог підтвердження/відхилення результату */}
-                  <GameResultsDialog
-                    open={confirmDialogOpen}
-                    onClose={() => setConfirmDialogOpen(false)}
-                    game={currentGame}
-                    onResultsSaved={(action) => {
-                      setConfirmDialogOpen(false);
-                      if (action === 'edit') {
-                        // Якщо користувач натиснув "Змінити результат", відкриваємо діалог редагування
-                        setEditResultsDialogOpen(true);
-                      } else if (action === 'approve') {
-                        // Якщо користувач підтвердив результат
-                        if (typeof window !== 'undefined') window.location.reload();
-                      }
-                    }}
-                    readOnly={true}
-                    confirmMode="approve"
-                  />                  {/* Діалог редагування результату */}
-                  <GameResultsDialog
-                    open={editResultsDialogOpen}
-                    onClose={() => setEditResultsDialogOpen(false)}
-                    game={currentGame}
-                    onResultsSaved={(action) => {
-                      setEditResultsDialogOpen(false);
-                      if (typeof window !== 'undefined') window.location.reload();
-                    }}
-                  />
+                    <>
+                      <Typography color="text.secondary" sx={{mt:2}}>Ви підтвердили результат. Очікуємо на опонента.</Typography>
+                      <Box sx={{display:'flex',gap:2,mt:1}}>                        <Button 
+                          variant="outlined" 
+                          color="primary" 
+                          size="small"
+                          onClick={() => {
+                            setViewMode('ownResult');
+                            setGameResultViewOpen(true);
+                          }}
+                        >
+                          Переглянути мій результат
+                        </Button>
+                      </Box>
+                    </>
+                  )}{/* Remove dialogs from here - they'll be at the bottom */}
                 </>
-              )}                <GameResultsDialog
-                open={resultsDialogOpen}
-                onClose={() => setResultsDialogOpen(false)}
-                game={currentGame}
-                onResultsSaved={(action) => {
-                  setResultsDialogOpen(false);
-                  if (typeof window !== 'undefined') window.location.reload();
-                }}
-              />
-
-              {/* View-only dialog for finished games */}
-              <GameResultsDialog
-                open={viewResultsDialogOpen}
-                onClose={() => setViewResultsDialogOpen(false)}
-                game={currentGame}
-                onResultsSaved={() => setViewResultsDialogOpen(false)}
-                readOnly={true}
-                adminViewOnly={true}
-              />
-
-              {/* Cancel game button */}
+              )}{/* Cancel game button */}
               {currentGame.status === 'planned' && (
                 <Button 
                   size="small" 
@@ -404,10 +355,62 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
               <Button variant="contained" color="primary" sx={{mt:2}} onClick={()=>setOpenPlanGame(true)}>
                 Запланувати гру
               </Button>
-            )}
-          </Box>
+            )}          </Box>
         )}
       </Paper>
+
+      {/* Dialogs - rendered unconditionally, controlled by open props */}
+      <GameResultView
+        open={gameResultViewOpen}
+        onClose={() => setGameResultViewOpen(false)}
+        game={currentGame}
+        mode={viewMode}        onAction={async (action) => {
+          if (action === 'edit') {
+            setGameResultViewOpen(false);
+            setIsAdminEdit(false);
+            setGameResultEditOpen(true);
+          } else if (action === 'approve') {
+            try {
+              const res = await fetch('/api/campaigns/'+currentGame.campaign_id+'/battles/plan/results', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_id: currentGame.id, action: 'approve' })
+              });
+              if (!res.ok) throw new Error('Не вдалося підтвердити результат');
+              setGameResultViewOpen(false);
+              if (typeof window !== 'undefined') window.location.reload();
+            } catch (error) {
+              console.error('Error approving result:', error);
+              // You might want to show an error message to the user here
+            }
+          } else if (action === 'reject') {
+            try {
+              const res = await fetch('/api/campaigns/'+currentGame.campaign_id+'/battles/plan/results', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ game_id: currentGame.id, action: 'reject' })
+              });
+              if (!res.ok) throw new Error('Не вдалося відхилити результат');
+              setGameResultViewOpen(false);
+              if (typeof window !== 'undefined') window.location.reload();
+            } catch (error) {
+              console.error('Error rejecting result:', error);
+              // You might want to show an error message to the user here
+            }
+          }
+        }}
+      />
+
+      <GameResultEdit
+        open={gameResultEditOpen}
+        onClose={() => setGameResultEditOpen(false)}
+        game={currentGame}
+        isAdmin={isAdminEdit}
+        onResultsSaved={() => {
+          setGameResultEditOpen(false);
+          if (typeof window !== 'undefined') window.location.reload();
+        }}
+      />
     </>
   );
 };
