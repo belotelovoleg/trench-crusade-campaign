@@ -31,13 +31,21 @@ export default function CampaignSelectionPage() {
   const [joiningCampaign, setJoiningCampaign] = useState<number | null>(null);
   const [error, setError] = useState<string>('');
   const [showError, setShowError] = useState<boolean>(false);
-  
-  useEffect(() => {
+    useEffect(() => {
     // Fetch campaigns and user info
     Promise.all([
       fetch('/api/campaigns').then(res => res.json()),
       fetch('/api/me').then(res => res.json())
-    ])    .then(([campaignsData, userData]) => {      // If user is not authenticated
+    ])
+    .then(([campaignsData, userData]) => {
+      // Check if user account was deactivated
+      if (userData.error) {
+        alert(userData.error);
+        router.push('/login');
+        return;
+      }
+      
+      // If user is not authenticated
       if (!userData.user) {
         // Redirect to login if not authenticated
         router.push('/login');

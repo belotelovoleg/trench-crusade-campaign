@@ -333,19 +333,35 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
                 </Button>
               )}
             </>
-          )        ) : (
-          <Box sx={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+          )        ) : (          <Box sx={{display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
             <Typography color="text.secondary" variant="body2">
-              Гра ще не запланована. {warband?.status === 'needs_update' ? 'Спочатку оновіть ростер варбанди, а потім запросіть опонента для нової гри.' : 'Ви можете запросити опонента для нової гри.'}
+              {warband?.status === 'checking' 
+                ? 'Варбанда на перевірці. Ви можете замінити ростер, якщо завантажили неправильний файл.'
+                : warband?.status === 'needs_update' 
+                ? 'Спочатку оновіть ростер варбанди, а потім запросіть опонента для нової гри.'
+                : 'Гра ще не запланована. Ви можете запросити опонента для нової гри.'
+              }
             </Typography>
-            {warband?.status === 'needs_update' ? (
+            {warband?.status === 'checking' ? (              <Button 
+                variant="contained" 
+                color="info" 
+                sx={{mt:2, fontWeight: 700}} 
+                onClick={() => {
+                  if (campaignId && warband?.id) {
+                    window.location.href = `/campaign/${campaignId}/warband-apply?warband_id=${warband.id}&replace=true`;
+                  }
+                }}
+              >
+                <span style={{fontSize:18,marginRight:6}}>🔄</span> Замінити ростер
+              </Button>
+            ) : warband?.status === 'needs_update' ? (
               <Button 
                 variant="contained" 
                 color="warning" 
                 sx={{mt:2, fontWeight: 700}} 
                 onClick={() => {
                   if (campaignId && warband?.id) {
-                    window.location.href = `/campaign/${campaignId}/warband-apply?warband_id=${warband.id}&warband_name=${encodeURIComponent(warband.name || '')}`;
+                    window.location.href = `/campaign/${campaignId}/warband-apply?warband_id=${warband.id}`;
                   }
                 }}
               >
@@ -355,7 +371,7 @@ const BattleGameBlock: React.FC<BattleGameBlockProps> = ({
               <Button variant="contained" color="primary" sx={{mt:2}} onClick={()=>setOpenPlanGame(true)}>
                 Запланувати гру
               </Button>
-            )}          </Box>
+            )}</Box>
         )}
       </Paper>
 

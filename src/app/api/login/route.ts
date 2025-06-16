@@ -22,19 +22,23 @@ export async function POST(request: Request) {
           { login: login },
           { email: login }
         ]
-      }
-    });
+      }    });
     if (!user) {
-      return NextResponse.json({ success: false, error: 'Користувача не знайдено' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Невірний логін або пароль' }, { status: 401 });
     }
 
     // Перевіряємо пароль
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return NextResponse.json({ success: false, error: 'Користувача не знайдено' }, { status: 401 });
-    }    // Додатковий захист: якщо користувач неактивний і не є супер адміном — заборонити логін
+      return NextResponse.json({ success: false, error: 'Невірний логін або пароль' }, { status: 401 });
+    }
+
+    // Додатковий захист: якщо користувач неактивний і не є супер адміном — заборонити логін
     if (user.is_active === false && user.is_super_admin !== true) {
-      return NextResponse.json({ success: false, error: 'В доступі відмовлено: акаунт неактивний' }, { status: 403 });
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Ваш акаунт було деактивовано. Для відновлення доступу зверніться до адміністратора кампанії.' 
+      }, { status: 403 });
     }
 
     // Оновлюємо ldt (last login date)

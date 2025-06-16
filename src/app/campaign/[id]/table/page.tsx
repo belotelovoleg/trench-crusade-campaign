@@ -4,8 +4,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Avatar, Typography, Box, CircularProgress, Tooltip } from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
-import MilitaryTechIcon from '@mui/icons-material/MilitaryTech';
 import styles from '../../../page.module.css';
 import FACTION_AVATARS from '../../../factionAvatars';
 import GameResultView from '../../../components/GameResultView';
@@ -135,12 +133,11 @@ export default function TablePage() {
               >                <div style={{fontWeight: 500, color: '#666', marginBottom: 2}}>
                   {gameStatusMap[game.status] || game.status}
                 </div>
-                <b>vs {game.opponent}</b><br/>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
+                <b>vs {game.opponent}</b><br/>                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center', mt: 0.5 }}>
                   <Tooltip title="Переможні бали (VP)" arrow>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                      <StarIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      <img src="/cup.svg" alt="victory points" style={{ width: 14, height: 14 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                         {game.vp}
                       </Typography>
                     </Box>
@@ -148,18 +145,17 @@ export default function TablePage() {
                   <Typography variant="caption">/</Typography>
                   <Tooltip title="Переможні бали (VP)" arrow>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                      <StarIcon sx={{ fontSize: 14, color: 'primary.main' }} />
-                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      <img src="/cup.svg" alt="victory points" style={{ width: 14, height: 14 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                         {game.opponent_vp}
                       </Typography>
                     </Box>
                   </Tooltip>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
+                </Box>                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'center' }}>
                   <Tooltip title="Слава (GP)" arrow>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                      <MilitaryTechIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
-                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      <img src="/medal.svg" alt="glory points" style={{ width: 14, height: 14 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                         {game.gp}
                       </Typography>
                     </Box>
@@ -167,8 +163,8 @@ export default function TablePage() {
                   <Typography variant="caption">/</Typography>
                   <Tooltip title="Слава (GP)" arrow>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
-                      <MilitaryTechIcon sx={{ fontSize: 14, color: 'secondary.main' }} />
-                      <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                      <img src="/medal.svg" alt="glory points" style={{ width: 14, height: 14 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                         {game.opponent_gp}
                       </Typography>
                     </Box>

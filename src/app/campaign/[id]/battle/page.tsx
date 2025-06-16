@@ -299,24 +299,23 @@ function BattlePageContent() {
             </Tooltip>
           )}
           <span>{oppWarband?.name}</span>
-        </Box>
-        <Box sx={{display:'flex',alignItems:'center',gap:2,mt:0.5}}>
+        </Box>        <Box sx={{display:'flex',alignItems:'center',gap:2,mt:0.5}}>
           <Tooltip title="Кількість моделей" arrow>
             <span style={{display:'flex',alignItems:'center',gap:4}}>
-              <span role="img" aria-label="models">🧍</span>
-              <b>{modelCount}</b>
+              <img src="/soldier.svg" alt="models" style={{ width: 16, height: 16 }} />
+              <b style={{ color: 'var(--mui-palette-primary-main)' }}>{modelCount}</b>
             </span>
           </Tooltip>
           <Tooltip title="Дукати" arrow>
             <span style={{display:'flex',alignItems:'center',gap:4}}>
-              <span role="img" aria-label="ducats">💰</span>
-              <b>{ducats}</b>
+              <img src="/coin.svg" alt="ducats" style={{ width: 16, height: 16 }} />
+              <b style={{ color: 'var(--mui-palette-primary-main)' }}>{ducats}</b>
             </span>
           </Tooltip>
-          <Tooltip title="Glory Points" arrow>
+          <Tooltip title="Слава (GP)" arrow>
             <span style={{display:'flex',alignItems:'center',gap:4}}>
-              <span role="img" aria-label="glory">⭐</span>
-              <b>{gloryPoints}</b>
+              <img src="/medal.svg" alt="glory" style={{ width: 16, height: 16 }} />
+              <b style={{ color: 'var(--mui-palette-primary-main)' }}>{gloryPoints}</b>
             </span>
           </Tooltip>
           {oppRoster && oppRoster.file_url && (

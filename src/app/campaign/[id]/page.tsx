@@ -31,6 +31,13 @@ export default function CampaignHome() {
       fetch(`/api/me?campaignId=${campaignId}`).then(res => res.json()),
       fetch(`/api/campaigns/${campaignId}`).then(res => res.json())
     ])    .then(([aboutData, userData, campaignData]) => {
+      // Check if user account was deactivated
+      if (userData.error) {
+        alert(userData.error);
+        router.push('/login');
+        return;
+      }
+      
       setAbout(aboutData.content || '');
       setUser(userData.user || null);
       setCampaign(campaignData.campaign || null);
@@ -278,17 +285,14 @@ export default function CampaignHome() {
                             sx={{ width: '100%' }}
                           >
                             <span style={{fontSize:18,marginRight:6}}>🛠️</span> Оновити ростер
-                          </Button>) : (
-                          <Button
+                          </Button>) : (                          <Button
                             variant="contained"
                             color="warning"
                             size="small"
                             component={Link}
                             href={`/campaign/${campaignId}/battle?warband_id=${w.id}`}
-                            disabled={w.status === 'checking' || w.status === 'needs_update'}
-                            title={w.status === 'checking' ? 'Варбанди на перевірці. Дочекайтесь схвалення.' : w.status === 'needs_update' ? 'Варбанди потребують оновлення ростеру. Оновіть ростер для активації.' : ''}
                             sx={{ width: '100%' }}
-                          >                            <img
+                          ><img
                               src="/swords.png"
                               alt="Схрещені мечі"
                               style={{

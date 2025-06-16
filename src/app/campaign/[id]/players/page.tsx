@@ -23,6 +23,7 @@ import {
 } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import DownloadIcon from "@mui/icons-material/Download";
+import StarIcon from "@mui/icons-material/Star";
 import Slider from "@mui/material/Slider";
 import FACTION_AVATARS from "../../../factionAvatars";
 
@@ -337,28 +338,24 @@ export default function PlayersPage() {
                                 borderRadius: "8px",
                                 backgroundColor: "rgba(255, 255, 255, 0.9)",
                               }}
-                            >
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-                                <Tooltip title="Кількість моделей" arrow>
+                            >                              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>                                <Tooltip title="Кількість моделей" arrow>
                                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
-                                    <span role="img" aria-label="models">🧍</span>
-                                    <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.85rem" }}>
+                                    <img src="/soldier.svg" alt="models" style={{ width: 16, height: 16 }} />
+                                    <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.85rem", color: "primary.main" }}>
                                       {rosterToShow.model_count}
                                     </Typography>
                                   </Box>
-                                </Tooltip>
-                                <Tooltip title="Дукати" arrow>
+                                </Tooltip>                                <Tooltip title="Дукати" arrow>
                                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
-                                    <span role="img" aria-label="ducats">💰</span>
-                                    <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.85rem" }}>
+                                    <img src="/coin.svg" alt="ducats" style={{ width: 16, height: 16 }} />
+                                    <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.85rem", color: "primary.main" }}>
                                       {rosterToShow.ducats}
                                     </Typography>
                                   </Box>
-                                </Tooltip>
-                                <Tooltip title="Glory Points" arrow>
+                                </Tooltip>                                <Tooltip title="Слава (GP)" arrow>
                                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.3 }}>
-                                    <span role="img" aria-label="glory">⭐</span>
-                                    <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.85rem" }}>
+                                    <img src="/medal.svg" alt="glory" style={{ width: 16, height: 16 }} />
+                                    <Typography variant="body2" sx={{ fontWeight: "bold", fontSize: "0.85rem", color: "primary.main" }}>
                                       {rosterToShow.glory_points}
                                     </Typography>
                                   </Box>

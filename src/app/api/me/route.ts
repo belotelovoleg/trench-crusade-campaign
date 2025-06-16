@@ -27,16 +27,16 @@ export async function GET(request: Request) {
 
     // Get campaign ID from query params if provided
     const url = new URL(request.url);
-    const campaignId = url.searchParams.get('campaignId');
-
-    // Find user by ID from JWT token
+    const campaignId = url.searchParams.get('campaignId');    // Find user by ID from JWT token
     const user = await prisma.players.findUnique({
-      where: { id: userId },select: { 
+      where: { id: userId },
+      select: { 
         id: true, 
         login: true, 
         name: true, 
         email: true, 
         is_super_admin: true, 
+        is_active: true, // Add is_active check
         avatar_url: true,
         notes: true
       },
@@ -44,7 +44,24 @@ export async function GET(request: Request) {
 
     if (!user) {
       return NextResponse.json({ user: null }, { status: 200 });
-    }    // If campaignId is provided, check campaign-specific admin status and membership
+    }
+
+    // Check if user is active (unless they're a super admin)
+    if (user.is_active === false && user.is_super_admin !== true) {
+      // Clear the auth token cookie since user is inactive
+      const response = NextResponse.json({ 
+        user: null, 
+        error: 'Ваш акаунт було деактивовано. Зверніться до адміністратора.' 
+      }, { status: 403 });
+      response.cookies.set('authToken', '', { 
+        expires: new Date(0), 
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+      return response;
+    }// If campaignId is provided, check campaign-specific admin status and membership
     let isCampaignAdmin = false; // default to not admin
     let isInCampaign = false; // default to not in campaign
     let currentCampaign: any = null; // user's current campaign
@@ -114,9 +131,7 @@ export async function GET(request: Request) {
       name: w.name,
       status: w.status,
       file_url: w.rosters[0]?.id ? `/api/roster?roster_id=${w.rosters[0].id}` : null,
-    }));
-
-    return NextResponse.json({
+    }));    return NextResponse.json({
       user: {
         id: user.id,
         login: user.login,
@@ -126,6 +141,7 @@ export async function GET(request: Request) {
         current_campaign: currentCampaign, // User's current campaign (if any)
         is_super_admin: user.is_super_admin,
         avatar: user.avatar_url ? `/${user.avatar_url}` : null,
+        notes: user.notes,
         hasWarband: warbandsWithFile.length > 0,
         warbandCount: warbandsWithFile.length,
         warbands: warbandsWithFile,

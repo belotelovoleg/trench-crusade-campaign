@@ -75,11 +75,10 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to ${mode} campaign`);
-        }
+          throw new Error(errorData.error || `Failed to ${mode} campaign`);        }
 
         const result = await response.json();
-        router.push(mode === 'create' ? `/campaign/${result.id}` : `/campaign/${campaignId}`);
+        router.push('/'); // Redirect to homepage instead of campaign page
       } else {
         // No new image - send JSON
         const response = await fetch(endpoint, {
@@ -95,11 +94,10 @@ export default function CampaignForm({ mode, campaignId, initialData }: Campaign
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to ${mode} campaign`);
-        }
+          throw new Error(errorData.error || `Failed to ${mode} campaign`);        }
 
         const result = await response.json();
-        router.push(mode === 'create' ? `/campaign/${result.id}` : `/campaign/${campaignId}`);
+        router.push('/'); // Redirect to homepage instead of campaign page
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : `An error occurred while ${mode === 'create' ? 'creating' : 'updating'} the campaign`);

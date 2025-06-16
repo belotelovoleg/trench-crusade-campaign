@@ -26,10 +26,9 @@ export default function ProfilePage() {
   const [showCropper, setShowCropper] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
-  const [rawImage, setRawImage] = useState<string | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);  const [rawImage, setRawImage] = useState<string | null>(null);
   const [tab, setTab] = useState(0);
-  const [notes, setNotes] = useState(user?.notes || "");
+  const [notes, setNotes] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const profileBgRef = useRef<HTMLDivElement>(null);
 

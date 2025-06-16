@@ -47,6 +47,19 @@ const GameResultEdit: React.FC<GameResultEditProps> = ({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string|null>(null);  const [reinforce1, setReinforce1] = useState(game?.player1_calledReinforcements || false);
   const [reinforce2, setReinforce2] = useState(game?.player2_calledReinforcements || false);
+
+  // When reinforcements are called, reset research dice to 0
+  useEffect(() => {
+    if (reinforce1) {
+      setExplore1('0');
+    }
+  }, [reinforce1]);
+
+  useEffect(() => {
+    if (reinforce2) {
+      setExplore2('0');
+    }
+  }, [reinforce2]);
   
   // Advanced features state
   const [injuries1, setInjuries1] = useState<Array<{name:string,roll:string}>>(game?.player1_injuries || []);
@@ -607,17 +620,19 @@ const GameResultEdit: React.FC<GameResultEditProps> = ({
                   </IconButton>
                 </Box>
               </AccordionDetails>
-            </Accordion>
-
-            <TextField
+            </Accordion>            <TextField
               label="Кості дослідження"
               value={explore1}
               onChange={e => setExplore1(e.target.value)}
               size="small"
               sx={{ mt: 1, width: '100%' }}
               placeholder="напр. 2D6+1"
+              disabled={reinforce1}
+              helperText={reinforce1 ? "Недоступно при виклику підкріплень" : ""}
             />
-          </Box>          {/* Player 2 */}
+          </Box>
+
+          {/* Player 2 */}
           <Box sx={{ flex: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 1 }}>Гравець 2</Typography>
             <Box sx={{display:'flex',alignItems:'center',gap:1,mb:1.5}}>
@@ -884,15 +899,15 @@ const GameResultEdit: React.FC<GameResultEditProps> = ({
                   </IconButton>
                 </Box>
               </AccordionDetails>
-            </Accordion>
-
-            <TextField
+            </Accordion>            <TextField
               label="Кості дослідження"
               value={explore2}
               onChange={e => setExplore2(e.target.value)}
               size="small"
               sx={{ mt: 1, width: '100%' }}
               placeholder="напр. 2D6+1"
+              disabled={reinforce2}
+              helperText={reinforce2 ? "Недоступно при виклику підкріплень" : ""}
             />
           </Box>
         </Box>

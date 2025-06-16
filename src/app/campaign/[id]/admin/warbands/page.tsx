@@ -324,14 +324,13 @@ export default function CampaignWarbandsAdmin() {
                             return (
                               <MenuItem key={r.id} value={itemValue} dense>
                                 {typeof r.game_number === 'number' ? `Гра: ${r.game_number}` : i+1}
-                                {' '}
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 1, marginLeft: 4 }}>
-                                  <span role="img" aria-label="models">🧍</span>
-                                  <span>{typeof r.model_count === 'number' ? r.model_count : '?'}</span>
-                                  <span role="img" aria-label="ducats" style={{ marginLeft: 4 }}>💰</span>
-                                  <span>{typeof r.ducats === 'number' ? r.ducats : '?'}</span>
-                                  <span role="img" aria-label="glory" style={{ marginLeft: 4 }}>⭐</span>
-                                  <span>{typeof r.glory_points === 'number' ? r.glory_points : '0'}</span>
+                                {' '}                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 1, marginLeft: 4 }}>
+                                  <img src="/soldier.svg" alt="models" style={{ width: 14, height: 14 }} />
+                                  <span style={{ color: 'var(--mui-palette-primary-main)', fontWeight: 'bold' }}>{typeof r.model_count === 'number' ? r.model_count : '?'}</span>
+                                  <img src="/coin.svg" alt="ducats" style={{ width: 14, height: 14, marginLeft: 4 }} />
+                                  <span style={{ color: 'var(--mui-palette-primary-main)', fontWeight: 'bold' }}>{typeof r.ducats === 'number' ? r.ducats : '?'}</span>
+                                  <img src="/medal.svg" alt="glory" style={{ width: 14, height: 14, marginLeft: 4 }} />
+                                  <span style={{ color: 'var(--mui-palette-primary-main)', fontWeight: 'bold' }}>{typeof r.glory_points === 'number' ? r.glory_points : '0'}</span>
                                 </span>
                               </MenuItem>
                             );
