@@ -99,7 +99,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string,
       if (!Array.isArray(selections)) return 0;
       let count = 0;
       for (const entry of selections) {
-        if (entry.type === 'model') count += entry.number || 1;
+        if ((entry.type === 'model') && (entry.name != 'Pile of Stuff')) count += entry.number || 1;
         if (Array.isArray(entry.selections)) count += countModels(entry.selections);
       }
       return count;
