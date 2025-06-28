@@ -247,6 +247,10 @@ a.secondary {
   line-height: 1.7;
 }
 
+.aboutContent a {
+  color: brown;
+}
+
 /* ===== BATTLE PAGE BLOCKS ===== */
 .battleAboutBlock {
   background: rgba(255, 255, 255, 0.75);
