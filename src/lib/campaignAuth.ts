@@ -10,7 +10,7 @@ export async function requireCampaignAdmin(campaignId: number): Promise<any | Ne
   
   if (!user) {
     return NextResponse.json(
-      { error: 'Authentication required' },
+      { error: 'Потрібна аутентифікація' },
       { status: 401 }
     );
   }
@@ -31,7 +31,7 @@ export async function requireCampaignAdmin(campaignId: number): Promise<any | Ne
   
   if (!campaignMembership) {
     return NextResponse.json(
-      { error: 'Campaign admin privileges required' },
+      { error: 'Потрібні права адміністратора кампанії' },
       { status: 403 }
     );
   }
@@ -47,7 +47,7 @@ export async function requireCampaignMembership(campaignId: number): Promise<any
   
   if (!user) {
     return NextResponse.json(
-      { error: 'Authentication required' },
+      { error: 'Потрібна аутентифікація' },
       { status: 401 }
     );
   }
@@ -67,7 +67,7 @@ export async function requireCampaignMembership(campaignId: number): Promise<any
   
   if (!campaignMembership) {
     return NextResponse.json(
-      { error: 'Campaign membership required' },
+      { error: 'Потрібне членство в кампанії' },
       { status: 403 }
     );
   }

@@ -8,17 +8,29 @@ import greetings from '../../greetings';
 
 export const dynamic = "force-dynamic";
 
+interface Article {
+  id: number;
+  title: string;
+  excerpt: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  showFullContent: boolean;
+}
+
 export default function CampaignHome() {
   const router = useRouter();
   const params = useParams();
   const campaignId = params.id;
-  const [about, setAbout] = useState<string>('');
-  const [aboutLoading, setAboutLoading] = useState(true);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [articlesLoading, setArticlesLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);  const [greeting, setGreeting] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [greeting, setGreeting] = useState<string>('');
   const [campaign, setCampaign] = useState<any>(null);
   const [isInCampaign, setIsInCampaign] = useState<boolean>(false);
   const [joinLoading, setJoinLoading] = useState<boolean>(false);
+  const [expandedArticles, setExpandedArticles] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!campaignId) return;
@@ -30,7 +42,8 @@ export default function CampaignHome() {
       }).then(res => res.json()),
       fetch(`/api/me?campaignId=${campaignId}`).then(res => res.json()),
       fetch(`/api/campaigns/${campaignId}`).then(res => res.json())
-    ])    .then(([aboutData, userData, campaignData]) => {
+    ])
+    .then(([articlesData, userData, campaignData]) => {
       // Check if user account was deactivated
       if (userData.error) {
         alert(userData.error);
@@ -38,19 +51,19 @@ export default function CampaignHome() {
         return;
       }
       
-      setAbout(aboutData.content || '');
+      setArticles(articlesData.articles || []);
       setUser(userData.user || null);
       setCampaign(campaignData.campaign || null);
-        // Check if user is in this campaign
+      // Check if user is in this campaign
       if (userData.user) {
         setIsInCampaign(userData.user.is_in_campaign || false);
       }
       
-      setAboutLoading(false);
+      setArticlesLoading(false);
       setLoading(false);
     })
     .catch(() => {
-      setAboutLoading(false);
+      setArticlesLoading(false);
       setLoading(false);
     });
 
@@ -91,7 +104,17 @@ export default function CampaignHome() {
       setJoinLoading(false);
     }
   };
-  if (loading || aboutLoading) {
+  const toggleArticleExpansion = (articleId: number) => {
+    const newExpanded = new Set(expandedArticles);
+    if (newExpanded.has(articleId)) {
+      newExpanded.delete(articleId);
+    } else {
+      newExpanded.add(articleId);
+    }
+    setExpandedArticles(newExpanded);
+  };
+
+  if (loading || articlesLoading) {
     return (
       <div className="consistentLoadingContainer">
         <CircularProgress />
@@ -105,22 +128,84 @@ export default function CampaignHome() {
         <Typography variant="h6">Campaign not found</Typography>
       </div>
     );
-  }// Визначаємо, чи about реально порожній (навіть якщо <p></p> або пробіли)
-  let isAboutEmpty = true;
-  if (about) {
-    // Видаляємо всі теги, пробіси, переноси
-    const text = about.replace(/<[^>]+>/g, '').replace(/\s+/g, '');
-    isAboutEmpty = !text;
-  }
-  return (
+  }  return (
     <div className="consistentBackgroundContainer">
       <div className={styles.mainPageTitle}>Ласкаво просимо до {campaign.name}</div>
       <div className={styles.mainPageBlocks}>
-        <div className={styles.mainPageAboutBlock}>          {!isAboutEmpty ? (
-            <div 
-              dangerouslySetInnerHTML={{ __html: about }} 
-              className={styles.aboutContent}
-            />
+        <div className={styles.mainPageAboutBlock}>
+          {articles.length > 0 ? (
+            <div className={styles.articlesContainer}>
+              {articles.map((article) => {
+                const isExpanded = expandedArticles.has(article.id);
+                const shouldShowReadMore = !article.showFullContent && !isExpanded;
+                
+                return (
+                  <article key={article.id} className={styles.articleItem}>
+                    <Typography 
+                      variant="h5" 
+                      component="h2"
+                      sx={{ 
+                        fontWeight: 700,
+                        mb: 1,
+                        color: 'primary.main',
+                        fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                      }}
+                    >
+                      {article.title}
+                    </Typography>
+                    
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        mb: 2,
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {new Date(article.updatedAt).toLocaleDateString('uk-UA', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </Typography>
+
+                    {shouldShowReadMore ? (
+                      <>
+                        <div 
+                          dangerouslySetInnerHTML={{ __html: article.excerpt }} 
+                          className={styles.articleContent}
+                        />
+                        <Button
+                          variant="text"
+                          color="primary"
+                          onClick={() => toggleArticleExpansion(article.id)}
+                          sx={{ mt: 1, p: 0, textTransform: 'none', fontSize: '0.875rem' }}
+                        >
+                          Читати далі →
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <div 
+                          dangerouslySetInnerHTML={{ __html: article.content }} 
+                          className={styles.articleContent}
+                        />
+                        {!article.showFullContent && (
+                          <Button
+                            variant="text"
+                            color="primary"
+                            onClick={() => toggleArticleExpansion(article.id)}
+                            sx={{ mt: 1, p: 0, textTransform: 'none', fontSize: '0.875rem' }}
+                          >
+                            ← Згорнути
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
           ) : (
             <Typography 
               variant="h6" 

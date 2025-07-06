@@ -1,6 +1,159 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, LinearProgress, RadioGroup, FormControlLabel, Radio, List, ListItemAvatar, ListItemText, Avatar, ListItemButton, Tooltip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, LinearProgress, List, ListItemAvatar, ListItemText, Avatar, ListItemButton, Tooltip, Box, Collapse, IconButton, Radio } from '@mui/material';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FACTION_AVATARS from '../factionAvatars';
+
+interface PlayerWithWarbandsProps {
+  player: any;
+  campaignId: string;
+  selectedOpponent: any;
+  selectedOpponentWarband: any;
+  onPlayerSelect: (player: any) => void;
+  onWarbandSelect: (warband: any) => void;
+}
+
+const PlayerWithWarbands: React.FC<PlayerWithWarbandsProps> = ({
+  player,
+  campaignId,
+  selectedOpponent,
+  selectedOpponentWarband,
+  onPlayerSelect,
+  onWarbandSelect,
+}) => {
+  const [warbands, setWarbands] = useState<any[]>([]);
+  const [loadingWarbands, setLoadingWarbands] = useState(false);
+  const [warbandsError, setWarbandsError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  const isSelected = selectedOpponent?.id === player.id;
+
+  useEffect(() => {
+    if (!isSelected || !campaignId) {
+      setWarbands([]);
+      setExpanded(false);
+      return;
+    }
+    
+    setLoadingWarbands(true);
+    setWarbandsError(null);
+    setExpanded(true);
+    
+    fetch(`/api/campaigns/${campaignId}/players/${player.id}/warbands`)
+      .then(res => res.json())
+      .then(data => {
+        setWarbands(data.warbands || []);
+      })
+      .catch(() => setWarbandsError('Не вдалося завантажити варбанди'))
+      .finally(() => setLoadingWarbands(false));
+  }, [isSelected, campaignId, player.id]);
+
+  const handlePlayerClick = () => {
+    if (isSelected) {
+      // If already selected, toggle expansion
+      setExpanded(!expanded);
+    } else {
+      // Select new player
+      onPlayerSelect(player);
+      onWarbandSelect(null);
+    }
+  };
+
+  return (
+    <>
+      <ListItemButton
+        onClick={handlePlayerClick}
+        selected={isSelected}
+        sx={{
+          borderRadius: '8px',
+          mb: 0.5,
+          '&.Mui-selected': {
+            backgroundColor: 'rgba(25, 118, 210, 0.12)',
+          },
+        }}
+      >
+        <ListItemAvatar>
+          <Avatar 
+            sx={{ width: 32, height: 32 }} 
+            src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : '/api/avatar/default'} 
+          />
+        </ListItemAvatar>
+        <ListItemText 
+          primary={player.name || player.login}
+          primaryTypographyProps={{ fontWeight: isSelected ? 'bold' : 'normal' }}
+        />
+        <Radio checked={isSelected} />
+        {isSelected && (
+          <IconButton size="small" sx={{ ml: 1 }}>
+            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          </IconButton>
+        )}
+      </ListItemButton>
+
+      <Collapse in={isSelected && expanded} timeout="auto" unmountOnExit>
+        <Box sx={{ pl: 4, pr: 2, pb: 1 }}>
+          {loadingWarbands ? (
+            <Box sx={{ py: 1 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Завантаження варбанд...
+              </Typography>
+              <LinearProgress />
+            </Box>
+          ) : warbandsError ? (
+            <Typography color="error" variant="body2" sx={{ py: 1 }}>
+              {warbandsError}
+            </Typography>
+          ) : !warbands.length ? (
+            <Typography color="text.secondary" variant="body2" sx={{ py: 1 }}>
+              Немає активних варбанд
+            </Typography>
+          ) : (
+            <List dense sx={{ py: 0 }}>
+              {warbands.map(warband => (
+                <ListItemButton
+                  key={warband.id}
+                  selected={selectedOpponentWarband?.id === warband.id}
+                  onClick={() => onWarbandSelect(warband)}
+                  sx={{
+                    borderRadius: '6px',
+                    mb: 0.5,
+                    minHeight: 40,
+                    '&.Mui-selected': {
+                      backgroundColor: 'rgba(76, 175, 80, 0.12)',
+                    },
+                  }}
+                >
+                  <ListItemText 
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {warband.catalogue_name && FACTION_AVATARS[warband.catalogue_name] && (
+                          <Tooltip title={warband.catalogue_name} arrow>
+                            <img 
+                              src={FACTION_AVATARS[warband.catalogue_name]} 
+                              alt={warband.catalogue_name} 
+                              style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }} 
+                            />
+                          </Tooltip>
+                        )}
+                        <Typography variant="body2" sx={{ fontWeight: selectedOpponentWarband?.id === warband.id ? 'bold' : 'normal' }}>
+                          {warband.name}
+                        </Typography>
+                      </Box>
+                    }
+                  />
+                  <Radio 
+                    checked={selectedOpponentWarband?.id === warband.id} 
+                    size="small"
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+          )}
+        </Box>
+      </Collapse>
+    </>
+  );
+};
 
 interface PlanGameDialogProps {
   open: boolean;
@@ -19,14 +172,13 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
   campaignId,
   onGamePlanned,
 }) => {
-  // --- СТАНИ ДІАЛОГУ ---
   const [playersList, setPlayersList] = useState<any[]>([]);
   const [loadingPlayers, setLoadingPlayers] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<any>(null);
   const [selectedOpponentWarband, setSelectedOpponentWarband] = useState<any>(null);
   const [planGameError, setPlanGameError] = useState<string|null>(null);
   const [planGameLoading, setPlanGameLoading] = useState(false);
-  // --- Завантаження списку гравців ---
+  // Load players list
   useEffect(() => {
     if (!open || !campaignId) return;
     setLoadingPlayers(true);
@@ -37,7 +189,7 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
         fetch(`/api/campaigns/${campaignId}/players`)
           .then(res => res.json())
           .then(data => {
-            // Відфільтрувати себе
+            // Filter out self
             const filtered = (data.players||[]).filter((p:any)=>p.id !== me.user.id);
             setPlayersList(filtered);
           })
@@ -45,26 +197,6 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
           .finally(()=>setLoadingPlayers(false));
       });
   }, [open, campaignId]);
-
-  // --- СТАНИ ТА ЛОГІКА ВАРБАНД ОПОНЕНТА ---
-  const [warbands, setWarbands] = useState<any[]>([]);
-  const [loadingWarbands, setLoadingWarbands] = useState(false);
-  const [warbandsError, setWarbandsError] = useState<string|null>(null);
-  useEffect(() => {
-    if (!selectedOpponent || !campaignId) {
-      setWarbands([]);
-      return;
-    }
-    setLoadingWarbands(true);
-    setWarbandsError(null);
-    fetch(`/api/campaigns/${campaignId}/players/${selectedOpponent.id}/warbands`)
-      .then(res => res.json())
-      .then(data => {
-        setWarbands(data.warbands || []);
-      })
-      .catch(()=>setWarbandsError('Не вдалося завантажити варбанди'))
-      .finally(()=>setLoadingWarbands(false));
-  }, [selectedOpponent, campaignId]);
   // --- Планування гри ---
   async function handlePlanGame() {
     if (!selectedOpponent || !selectedOpponentWarband || !campaignId) return;
@@ -142,85 +274,36 @@ const PlanGameDialog: React.FC<PlanGameDialogProps> = ({
           <Typography color="error">{planGameError}</Typography>
         ) : (
           <>
-            <Typography variant="subtitle2" sx={{mb:1}}>Оберіть опонента:</Typography>
+            <Typography variant="subtitle2" sx={{mb:1}}>Оберіть опонента та його варбанду:</Typography>
             {playersList.length === 0 ? (
               <Typography color="text.secondary" sx={{mb:2}}>Немає доступних опонентів для гри.</Typography>
-            ) : (              <RadioGroup 
-                value={selectedOpponent?.id||''} 
-                onChange={(_,v)=>{
-                  const found = playersList.find(p=>p.id==v);
-                  setSelectedOpponent(found);
-                  setSelectedOpponentWarband(null);
-                }}
+            ) : (
+              <List
                 sx={{
                   backgroundColor: 'rgba(255, 255, 255, 0.95)',
                   borderRadius: '8px',
-                  padding: '12px',
+                  padding: '8px',
                   marginTop: '8px',
                   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
                 }}
               >
-                {playersList.map(player=>(
-                  <FormControlLabel
+                {playersList.map(player => (
+                  <PlayerWithWarbands
                     key={player.id}
-                    value={player.id}
-                    control={<Radio/>}
-                    label={
-                      <span style={{display:'flex',alignItems:'center',gap:8}}>
-                        <Avatar 
-                          sx={{width:24,height:24}} 
-                          src={player.avatar_url ? `/api/avatar/${player.avatar_url}` : '/api/avatar/default'} 
-                        />
-                        <span>{player.name||player.login}</span>
-                      </span>
-                    }
+                    player={player}
+                    campaignId={campaignId}
+                    selectedOpponent={selectedOpponent}
+                    selectedOpponentWarband={selectedOpponentWarband}
+                    onPlayerSelect={(p) => {
+                      setSelectedOpponent(p);
+                      setSelectedOpponentWarband(null);
+                    }}
+                    onWarbandSelect={setSelectedOpponentWarband}
                   />
                 ))}
-              </RadioGroup>
-            )}
-            {selectedOpponent && (
-              <>
-                <Typography variant="subtitle2" sx={{mt:2,mb:1}}>Оберіть варбанду опонента:</Typography>
-                {loadingWarbands ? (
-                  <>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      Завантаження варбанд...
-                    </Typography>
-                    <LinearProgress />
-                  </>                ) : warbandsError ? (
-                  <Typography color="error">{warbandsError}</Typography>
-                ) : !warbands.length ? (
-                  <Typography color="text.secondary">Немає активних варбанд</Typography>
-                ) : (
-                  <List
-                    sx={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                      borderRadius: '8px',
-                      padding: '8px',
-                      marginTop: '8px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                    }}
-                  >
-                    {warbands.map(warband => (
-                      <ListItemButton key={warband.id} selected={selectedOpponentWarband?.id===warband.id} onClick={()=>setSelectedOpponentWarband(warband)}>
-                        <ListItemText 
-                          primary={
-                            <span style={{display:'flex',alignItems:'center',gap:8}}>
-                              {warband.catalogue_name && FACTION_AVATARS[warband.catalogue_name] ? (
-                                <Tooltip title={warband.catalogue_name} arrow>
-                                  <img src={FACTION_AVATARS[warband.catalogue_name]} alt={warband.catalogue_name} style={{width:24,height:24,borderRadius:'50%',objectFit:'cover',verticalAlign:'middle'}} />
-                                </Tooltip>
-                              ) : null}
-                              <span>{warband.name}</span>
-                            </span>
-                          }
-                        />
-                        <Radio checked={selectedOpponentWarband?.id===warband.id} />
-                      </ListItemButton>
-                    ))}
-                  </List>
-                )}
-              </>
+              </List>
             )}
           </>
         )}

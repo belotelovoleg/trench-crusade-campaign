@@ -54,7 +54,7 @@ export async function requireAuth(): Promise<AuthUser | NextResponse> {
   
   if (!user) {
     return NextResponse.json(
-      { error: 'Authentication required' },
+      { error: 'Потрібна аутентифікація' },
       { status: 401 }
     );
   }
@@ -80,7 +80,7 @@ export async function requireSuperAdmin(): Promise<AuthUser | NextResponse> {
   if (!authResult.is_super_admin) {
     console.log("User failed super admin check:", authResult);
     return NextResponse.json(
-      { error: 'Super admin privileges required' },
+      { error: 'Потрібні права супер-адміністратора' },
       { status: 403 }
     );
   }

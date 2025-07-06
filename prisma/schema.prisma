@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "rhel-openssl-1.0.x"]
 }
 
@@ -9,18 +9,18 @@ datasource db {
 }
 
 model campaigns {
-  id               Int              @id @default(autoincrement())
-  name             String
-  description      String?
-  image            String?          // Base64 encoded image
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @default(now()) @updatedAt
-  is_active        Boolean          @default(true)
-  warband_limit    Int              @default(2)
-  about_campaigns  about_campaign[]
-  games            games[]
+  id                Int                 @id @default(autoincrement())
+  name              String
+  description       String?
+  image             String?
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @default(now()) @updatedAt
+  is_active         Boolean             @default(true)
+  warband_limit     Int                 @default(2)
+  about_campaigns   about_campaign[]
+  games             games[]
   players_campaigns players_campaigns[]
-  warbands         warbands[]
+  warbands          warbands[]
 }
 
 model players_campaigns {
@@ -29,15 +29,14 @@ model players_campaigns {
   campaign_id Int
   is_admin    Boolean   @default(false)
   joined_at   DateTime  @default(now())
-  players     players   @relation(fields: [player_id], references: [id], onDelete: Cascade)
   campaigns   campaigns @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  players     players   @relation(fields: [player_id], references: [id], onDelete: Cascade)
 
   @@unique([player_id, campaign_id])
 }
 
 model games {
   id                                    Int          @id @default(autoincrement())
-  campaign_id                           Int
   warband_1_id                          Int
   warband_2_id                          Int
   status                                games_status @default(planned)
@@ -63,10 +62,11 @@ model games {
   player2_injuries                      Json?
   player1_skillAdvancements             Json?
   player2_skillAdvancements             Json?
-  player1_becomesElite                  Json?
-  player2_becomesElite                  Json?
   player1_explorationDice               Int?
   player2_explorationDice               Int?
+  campaign_id                           Int
+  player1_becomesElite                  Json?
+  player2_becomesElite                  Json?
   campaigns                             campaigns    @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   warbands_games_warband_1_idTowarbands warbands     @relation("games_warband_1_idTowarbands", fields: [warband_1_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "games_ibfk_1")
   warbands_games_warband_2_idTowarbands warbands     @relation("games_warband_2_idTowarbands", fields: [warband_2_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "games_ibfk_2")
@@ -87,13 +87,13 @@ model players {
   avatar_url        String?
   avatar            String?
   notes             String?
-  is_super_admin    Boolean             @default(false)
   is_active         Boolean             @default(true)
   idt               DateTime?           @default(now())
   udt               DateTime?           @default(now())
   ldt               DateTime?
-  warbands          warbands[]
+  is_super_admin    Boolean             @default(false)
   players_campaigns players_campaigns[]
+  warbands          warbands[]
 }
 
 model rosters {
@@ -125,7 +125,6 @@ model stories {
 
 model warbands {
   id                                 Int           @id @default(autoincrement())
-  campaign_id                        Int
   player_id                          Int
   name                               String?
   games_count                        Int?          @default(0)
@@ -134,11 +133,12 @@ model warbands {
   udt                                DateTime?     @default(now())
   catalogue_name                     String?
   status                             WarbandStatus @default(checking)
-  campaigns                          campaigns     @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  campaign_id                        Int
   games_games_warband_1_idTowarbands games[]       @relation("games_warband_1_idTowarbands")
   games_games_warband_2_idTowarbands games[]       @relation("games_warband_2_idTowarbands")
   rosters                            rosters[]
   stories                            stories[]
+  campaigns                          campaigns     @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   players                            players       @relation(fields: [player_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "warbands_ibfk_1")
 
   @@index([campaign_id], map: "idx_campaign_id_warbands")
@@ -146,13 +146,21 @@ model warbands {
 }
 
 model about_campaign {
-  id          Int       @id @default(autoincrement())
-  campaign_id Int
-  content     String?
-  updatedAt   DateTime  @default(now()) @updatedAt
-  campaigns   campaigns @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  id              Int       @id @default(autoincrement())
+  content         String?
+  updatedAt       DateTime  @default(now()) @updatedAt
+  campaign_id     Int
+  createdAt       DateTime  @default(now())
+  excerpt         String?
+  isPublished     Boolean   @default(true)
+  title           String    @default("Без назви")
+  showFullContent Boolean   @default(false)
+  sortOrder       Int       @default(0)
+  campaigns       campaigns @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
 
   @@index([campaign_id], map: "idx_campaign_id_about")
+  @@index([campaign_id, isPublished], map: "idx_campaign_published")
+  @@index([campaign_id, sortOrder], map: "idx_campaign_sort_order")
 }
 
 enum games_status {

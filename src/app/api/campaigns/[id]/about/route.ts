@@ -3,6 +3,18 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
+interface Article {
+  id: number;
+  title: string;
+  excerpt: string | null;
+  content: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  showFullContent: boolean | null;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -12,27 +24,38 @@ export async function GET(
   if (authResult instanceof NextResponse) {
     return authResult;
   }
-  try {    const campaignId = parseInt(params.id);
+  try {
+    const campaignId = parseInt(params.id);
     
     if (isNaN(campaignId)) {
       return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
     }
 
-    // We don't need to verify campaign membership for viewing basic campaign info
-    // Just check if campaign exists
-    const campaign = await prisma.campaigns.findUnique({
-      where: { id: campaignId }
+    // Check if user is participant of this campaign
+    const playerCampaign = await prisma.players_campaigns.findUnique({
+      where: {
+        player_id_campaign_id: {
+          player_id: authResult.userId,
+          campaign_id: campaignId,
+        },
+      },
     });
 
-    if (!campaign) {
-      return NextResponse.json({ error: 'Campaign not found' }, { status: 404 });
+    if (!playerCampaign) {
+      return NextResponse.json({ error: 'Потрібен доступ до кампанії' }, { status: 403 });
     }
 
-    const about = await prisma.about_campaign.findFirst({
-      where: { campaign_id: campaignId }
-    });
-    
-    const response = NextResponse.json({ content: about?.content || '' });
+    // Get published articles for this campaign in sort order
+    const result = await prisma.$queryRaw`
+      SELECT id, title, excerpt, content, "createdAt", "updatedAt", "showFullContent"
+      FROM about_campaign 
+      WHERE campaign_id = ${campaignId} AND "isPublished" = true
+      ORDER BY "sortOrder" ASC, "createdAt" ASC
+    `;
+
+    const articles = result as Article[];
+
+    const response = NextResponse.json({ articles });
     
     // Disable caching to get fresh content immediately
     response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -42,7 +65,7 @@ export async function GET(
     return response;
   } catch (error) {
     console.error('Error fetching campaign about:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Внутрішня помилка сервера' }, { status: 500 });
   }
 }
 
@@ -58,7 +81,7 @@ export async function PATCH(
   try {
     const campaignId = parseInt(params.id);
     if (isNaN(campaignId)) {
-      return NextResponse.json({ error: 'Invalid campaign ID' }, { status: 400 });
+      return NextResponse.json({ error: 'Невірний ID кампанії' }, { status: 400 });
     }
 
     const userCampaign = await prisma.players_campaigns.findFirst({
@@ -69,14 +92,14 @@ export async function PATCH(
     });
 
     if (!userCampaign) {
-      return NextResponse.json({ error: 'Not authorized for this campaign' }, { status: 403 });
+      return NextResponse.json({ error: 'Не авторизований для цієї кампанії' }, { status: 403 });
     }
 
     const body = await request.json();
     const content = body.content;
 
     if (typeof content !== 'string') {
-      return NextResponse.json({ error: 'Invalid content format' }, { status: 400 });
+      return NextResponse.json({ error: 'Невірний формат контенту' }, { status: 400 });
     }    // First check if about_campaign entry exists for this campaign
     const existingAbout = await prisma.about_campaign.findFirst({
       where: { campaign_id: campaignId }
@@ -98,6 +121,6 @@ export async function PATCH(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating campaign about:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Внутрішня помилка сервера' }, { status: 500 });
   }
 }

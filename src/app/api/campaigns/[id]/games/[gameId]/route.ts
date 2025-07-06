@@ -34,9 +34,44 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
     }    // Get the game with full warband and player data
     const game = await prisma.games.findUnique({
       where: { id: gameId },
-      include: {
+      select: {
+        id: true,
+        campaign_id: true,
+        warband_1_id: true,
+        warband_2_id: true,
+        status: true,
+        vp_1: true,
+        vp_2: true,
+        gp_1: true,
+        gp_2: true,
+        idt: true,
+        udt: true,
+        warband_1_gameNumber: true,
+        warband_2_gameNumber: true,
+        warband_1_roster_id: true,
+        warband_2_roster_id: true,
+        player1_isReady: true,
+        player2_isReady: true,
+        player1_id: true,
+        player2_id: true,
+        player1_isApprovedResult: true,
+        player2_isApprovedResult: true,
+        player1_calledReinforcements: true,
+        player2_calledReinforcements: true,
+        player1_injuries: true,
+        player2_injuries: true,
+        player1_skillAdvancements: true,
+        player2_skillAdvancements: true,
+        player1_becomesElite: true,
+        player2_becomesElite: true,
+        player1_explorationDice: true,
+        player2_explorationDice: true,
         warbands_games_warband_1_idTowarbands: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            catalogue_name: true,
+            campaign_id: true,
             players: {
               select: {
                 id: true,
@@ -48,7 +83,11 @@ export async function GET(req: NextRequest, { params }: { params: { id: string; 
           },
         },
         warbands_games_warband_2_idTowarbands: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            catalogue_name: true,
+            campaign_id: true,
             players: {
               select: {
                 id: true,
