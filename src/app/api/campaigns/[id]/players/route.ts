@@ -36,6 +36,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         id: true,
         name: true,
         login: true,
+        email: true,
         avatar_url: true,
         notes: true,
         is_active: true, // Include active status from players table        
