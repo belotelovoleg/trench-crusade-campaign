@@ -109,14 +109,21 @@ export async function POST(
           ],
         },
         select: {
+          warband_1_id: true,
+          warband_2_id: true,
           warband_1_gameNumber: true,
           warband_2_gameNumber: true,
         },
       });
       let maxNumber = 0;
       for (const g of games) {
-        if (g.warband_1_gameNumber && g.warband_1_gameNumber > maxNumber) maxNumber = g.warband_1_gameNumber;
-        if (g.warband_2_gameNumber && g.warband_2_gameNumber > maxNumber) maxNumber = g.warband_2_gameNumber;
+        // Only look at the game number that belongs to our specific warband
+        if (g.warband_1_id === warbandId && g.warband_1_gameNumber && g.warband_1_gameNumber > maxNumber) {
+          maxNumber = g.warband_1_gameNumber;
+        }
+        if (g.warband_2_id === warbandId && g.warband_2_gameNumber && g.warband_2_gameNumber > maxNumber) {
+          maxNumber = g.warband_2_gameNumber;
+        }
       }
       return maxNumber + 1;
     }
